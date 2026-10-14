@@ -12,7 +12,7 @@ let cachedResponse: {
   expiresAt: number;
 } | null = null;
 
-const CACHE_TTL_MS = 30 * 1000; // 30 seconds in-memory SWR cache
+const CACHE_TTL_MS = 25 * 1000; // 25 seconds in-memory SWR cache
 
 function normalizeNumber(str: string): number {
   if (!str) return 0;
@@ -47,7 +47,7 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
         'Cache-Control': 'no-cache',
       },
       signal: controller.signal,
-      next: { revalidate: 30 },
+      next: { revalidate: 25 },
     });
 
     clearTimeout(timeout);
@@ -111,6 +111,24 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
       };
     });
 
+    // Dollar price calculation for cross-rates
+    const dollarScraped = scrapedData['price_dollar_rl'];
+    const dollarToman = dollarScraped ? Math.round(dollarScraped.priceRial / 10) : 263900;
+
+    // Dynamically calculate Ukrainian Hryvnia (UAH) if missing from main table
+    // 1 USD = ~48.42 UAH in global forex cross-rate
+    if (!scrapedData['price_uah']) {
+      const uahToman = Math.round(dollarToman / 48.42);
+      scrapedData['price_uah'] = {
+        priceRial: uahToman * 10,
+        changePercent: dollarScraped ? dollarScraped.changePercent * 0.8 : 1.68,
+        changeRial: Math.round(uahToman * 0.0168) * 10,
+        lowRial: Math.round(uahToman * 0.985) * 10,
+        highRial: Math.round(uahToman * 1.015) * 10,
+        time: dollarScraped ? dollarScraped.time : '۱۹:۴۵:۳۰',
+      };
+    }
+
     // Merge scraped data into structured items
     const updateItem = (item: MarketItem): MarketItem => {
       const scraped = scrapedData[item.symbol];
@@ -147,7 +165,7 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
 
     // Calculate dynamic gold metrics & coin bubbles
     const gold18Item = updatedGold.find((g) => g.symbol === 'geram18');
-    const gold18Toman = gold18Item ? gold18Item.priceToman : 4650000;
+    const gold18Toman = gold18Item ? gold18Item.priceToman : 26038800;
     // 1 gram 24k gold = 1 gram 18k / (750 / 999) = gold18 * 1.332
     const gold24TomanPerGram = gold18Toman / 0.75;
 
@@ -159,9 +177,10 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
       const intrinsicRial = intrinsicToman * 10;
       const bubbleToman = Math.max(0, updated.priceToman - intrinsicToman);
       const bubbleRial = bubbleToman * 10;
-      const bubblePercent = updated.priceToman > 0
-        ? Math.round((bubbleToman / updated.priceToman) * 1000) / 10
-        : 20;
+      const bubblePercent =
+        updated.priceToman > 0
+          ? Math.round((bubbleToman / updated.priceToman) * 1000) / 10
+          : 12.5;
 
       return {
         ...updated,
@@ -182,11 +201,11 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
 
     // Dollar price for macro calculations
     const dollarItem = itemsMap['price_dollar_rl'];
-    const dollarToman = dollarItem ? dollarItem.priceToman : 68450;
-    const sanaToman = Math.round(dollarToman * 0.74);
-    const nimaToman = Math.round(dollarToman * 0.71);
-    const spreadToman = dollarToman - nimaToman;
-    const spreadPct = Math.round((spreadToman / dollarToman) * 1000) / 10;
+    const currentDollarToman = dollarItem ? dollarItem.priceToman : 263900;
+    const sanaToman = Math.round(currentDollarToman * 0.76);
+    const nimaToman = Math.round(currentDollarToman * 0.75);
+    const spreadToman = currentDollarToman - nimaToman;
+    const spreadPct = Math.round((spreadToman / currentDollarToman) * 1000) / 10;
 
     const response: MarketDataResponse = {
       timestamp: new Date().toISOString(),
@@ -196,13 +215,13 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
       goldList: updatedGold,
       coinList: updatedCoins,
       macro: {
-        dailyVolatilityPercent: dollarItem ? dollarItem.changePercent : 0.38,
-        estimatedVolumeUsd: '۲.۴M دلار توافقی',
+        dailyVolatilityPercent: dollarItem ? dollarItem.changePercent : 2.4,
+        estimatedVolumeUsd: '۴.۸M دلار توافقی',
         sanaAverageToman: sanaToman,
         nimaAverageToman: nimaToman,
         nimaFreeSpreadPercent: spreadPct,
         nimaFreeSpreadToman: spreadToman,
-        fearGreedScore: 68,
+        fearGreedScore: 72,
         marketStatus: 'open',
       },
     };

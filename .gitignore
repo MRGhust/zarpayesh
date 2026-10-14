@@ -35,3 +35,4 @@ next-env.d.ts
 # design raw archive
 stitch_.zip
 stitch_extracted
+scratch/

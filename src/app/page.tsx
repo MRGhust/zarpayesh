@@ -8,6 +8,7 @@ import { MasterHeader } from '@/components/shell/MasterHeader';
 import { NavigationTabs } from '@/components/shell/NavigationTabs';
 import { MasterFooter } from '@/components/shell/MasterFooter';
 import { PriceAlertModal } from '@/components/shell/PriceAlertModal';
+import { MobileNav } from '@/components/shell/MobileNav';
 import { ForexView } from '@/components/views/ForexView';
 import { GoldView } from '@/components/views/GoldView';
 import { WatchlistView } from '@/components/views/WatchlistView';
@@ -63,7 +64,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col selection:bg-primary-container selection:text-on-primary-container">
+    <div className="min-h-screen bg-obsidian text-on-surface flex flex-col selection:bg-bullion/20 selection:text-bullion-light pb-20 md:pb-0">
       {/* Top Fixed Header Stack */}
       <header className="sticky top-0 right-0 left-0 w-full z-40 flex flex-col shadow-2xl">
         <MarqueeTicker items={allItems} unit={unit} />
@@ -76,11 +77,14 @@ export default function HomePage() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
-        <NavigationTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        {/* Desktop Navigation Tabs (Hidden on mobile) */}
+        <div className="hidden md:block">
+          <NavigationTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
       </header>
 
       {/* Main View Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-6 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 sm:py-7">
         {activeTab === 'forex' && (
           <ForexView
             items={marketData.forexList || []}
@@ -126,6 +130,9 @@ export default function HomePage() {
 
       {/* Institutional Footer */}
       <MasterFooter />
+
+      {/* Mobile Fixed Bottom Navigation Dock (Mobile Only) */}
+      <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Price Alert Modal */}
       <PriceAlertModal
