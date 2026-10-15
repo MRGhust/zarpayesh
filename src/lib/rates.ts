@@ -111,6 +111,12 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
       };
     });
 
+    if (Object.keys(scrapedData).length === 0) {
+      throw new Error('TGJU returned no usable market rows');
+    }
+    const observedAt = new Date().toISOString();
+    const observedSymbols = new Set(Object.keys(scrapedData));
+
     // Dollar price calculation for cross-rates
     const dollarScraped = scrapedData['price_dollar_rl'];
     const dollarToman = dollarScraped ? Math.round(dollarScraped.priceRial / 10) : 263900;
@@ -132,7 +138,7 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
     // Merge scraped data into structured items
     const updateItem = (item: MarketItem): MarketItem => {
       const scraped = scrapedData[item.symbol];
-      if (!scraped) return item;
+      if (!scraped) return { ...item, dataQuality: 'sample', observedAt: undefined };
 
       const isOunce = item.symbol === 'ons';
       const priceRial = scraped.priceRial;
@@ -144,6 +150,8 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
 
       return {
         ...item,
+        dataQuality: observedSymbols.has(item.symbol) ? 'live' : 'estimated',
+        observedAt,
         priceRial,
         priceToman,
         buyPriceRial: isOunce ? undefined : Math.round(priceRial * 0.995),
@@ -235,13 +243,16 @@ export async function fetchLiveTGJU(): Promise<MarketDataResponse> {
   } catch (error) {
     console.warn('[Rates] Fetch from tgju.org failed, falling back to cache/mock:', error);
     if (cachedResponse) {
-      return cachedResponse.data;
+      return { ...cachedResponse.data, source: 'cache' };
     }
     return {
       timestamp: new Date().toISOString(),
       source: 'fallback',
       items: [...INITIAL_FOREX_ITEMS, ...INITIAL_GOLD_ITEMS, ...INITIAL_COIN_ITEMS].reduce(
-        (acc, item) => ({ ...acc, [item.symbol]: item, [item.id]: item }),
+        (acc, item) => {
+          const sample: MarketItem = { ...item, dataQuality: 'sample' };
+          return { ...acc, [item.symbol]: sample, [item.id]: sample };
+        },
         {}
       ),
       forexList: INITIAL_FOREX_ITEMS,

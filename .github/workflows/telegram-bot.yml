@@ -1,0 +1,80 @@
+name: Telegram bot
+on:
+  schedule:
+    - cron: '2-59/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy bot modules and apply additive database migrations
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths: ['az_be_ma_mabot/**', '.github/workflows/telegram-bot.yml']
+  pull_request:
+    paths: ['az_be_ma_mabot/**', 'src/lib/rates.ts', 'src/types/market.ts', 'tests/**', '.github/workflows/telegram-bot.yml']
+permissions:
+  contents: read
+concurrency:
+  group: telegram-bot-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: az_be_ma_mabot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: az_be_ma_mabot/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm test
+  market-contract:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:market
+      - run: npm run build
+  cloud:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: az_be_ma_mabot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: az_be_ma_mabot/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Check scheduler credential
+        env:
+          TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}
+        run: test -n "$TGCLOUD_TOKEN" || { echo 'Add the TGCLOUD_TOKEN Actions secret before enabling the scheduler.'; exit 1; }
+      - name: Deploy changed bot code
+        if: github.event_name == 'push' || inputs.deploy
+        env:
+          TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}
+        run: |
+          npm run deploy
+          npx tgcloud migrate --safe
+          npx tgcloud run endpoints/operator '{action:"register"}' --ctx '{operator:true}'
+      - name: Poll prices and deliver due notifications
+        env:
+          TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}
+        run: npm run tick

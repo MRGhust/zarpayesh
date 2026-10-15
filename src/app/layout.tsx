@@ -10,7 +10,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://zarpayesh.vercel.app'),
+  metadataBase: new URL('https://zarpayesh-five.vercel.app'),
   title: 'زرپایش | قیمت لحظه‌ای دلار (۲۶۳,۹۰۰ تومان)، طلا و سکه امامی',
   description:
     'سامانه مانیتورینگ بلادرنگ مظنه طلا، مسکوکات، دلار به ریال و تومان بر پایه TGJU.org همراه با حباب‌سنج سکه، مبدل پیشرفته چندارزی و نمودارهای تکنیکال.',
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     title: 'زرپایش | قیمت لحظه‌ای دلار (۲۶۳,۹۰۰ تومان)، طلا و سکه امامی',
     description:
       'پایش لحظه‌ای نرخ ارز، طلا، سکه امامی و گریونا بر پایه شبکه اطلاع‌رسانی طلا و ارز (TGJU). مجهز به حباب‌سنج و مبدل پیشرفته.',
-    url: 'https://zarpayesh.vercel.app',
+    url: 'https://zarpayesh-five.vercel.app',
     siteName: 'زرپایش (ZarPayesh)',
     locale: 'fa_IR',
     type: 'website',
