@@ -36,3 +36,4 @@ next-env.d.ts
 stitch_.zip
 stitch_extracted
 scratch/
+.env*

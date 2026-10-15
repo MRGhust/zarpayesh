@@ -44,7 +44,7 @@
 
 ## 🛠 معماری فنی و فناوری‌ها
 
-- **فریم‌ورک:** [Next.js 14 (App Router)](https://nextjs.org/)
+- **فریم‌ورک:** [Next.js 15 (App Router)](https://nextjs.org/)
 - **زبان:** TypeScript
 - **استایل‌دهی:** Tailwind CSS (با پالت رنگی اختصاصی *Executive Slate & Frosted Bullion*)
 - **آیکون‌ها:** Lucide React و Material Symbols
@@ -94,3 +94,7 @@ npx vercel --prod
 
 ## 📄 مجوز و لایسنس
 توسعه یافته با استانداردهای مدرن فرانت‌اند و مهندسی داده‌های مالی.
+
+## بات تلگرام
+
+بات زرپایش با تنظیمات مستقل هر گروه، اعلام دوره‌ای یا روزانه، نمودار PNG اختیاری، ساعات سکوت و هشدار قیمت در [az_be_ma_mabot/README.md](az_be_ma_mabot/README.md) مستند شده است. پردازش و دیتابیس روی Telegram Serverless اجرا می‌شوند؛ GitHub Actions محرک دوره‌ای را فراهم می‌کند. توکن CLI باید فقط در Actions secret با نام `TGCLOUD_TOKEN` ذخیره شود.

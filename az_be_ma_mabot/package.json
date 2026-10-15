@@ -1,0 +1,16 @@
+{
+  "name": "az_be_ma_mabot",
+  "private": true,
+  "devDependencies": {
+    "@tgcloud/cli": "0.2.0"
+  },
+  "scripts": {
+    "deploy": "tgcloud push",
+    "status": "tgcloud status",
+    "run": "tgcloud run",
+    "test": "node --test tests/*.test.js",
+    "tick": "tgcloud run endpoints/dispatch '{}' --ctx '{scheduler:true}'",
+    "check": "node scripts/check.mjs"
+  },
+  "type": "module"
+}

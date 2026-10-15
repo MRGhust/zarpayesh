@@ -3,6 +3,9 @@ export type RateRegime = 'free' | 'sana' | 'nima';
 export type ViewTab = 'forex' | 'gold' | 'watchlist' | 'converter';
 
 export interface MarketItem {
+  /** Only live observations may be broadcast by the Telegram bot. */
+  dataQuality?: 'live' | 'estimated' | 'sample';
+  observedAt?: string;
   id: string;
   symbol: string;
   title: string;
