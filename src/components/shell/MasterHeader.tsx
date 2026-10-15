@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { CurrencyUnit } from '@/types/market';
+import React, { useState, useEffect } from "react";
+import { CurrencyUnit } from "@/types/market";
 import {
   Bell,
   Volume2,
@@ -11,7 +11,7 @@ import {
   Clock,
   Coins,
   TrendingUp,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface MasterHeaderProps {
   unit: CurrencyUnit;
@@ -19,6 +19,9 @@ interface MasterHeaderProps {
   onOpenAlertModal: () => void;
   onSync: () => void;
   isSyncing: boolean;
+  soundEnabled: boolean;
+  onToggleSound: () => void;
+  dataStatus: string;
   searchQuery: string;
   onSearchChange: (q: string) => void;
 }
@@ -29,27 +32,29 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
   onOpenAlertModal,
   onSync,
   isSyncing,
+  soundEnabled,
+  onToggleSound,
+  dataStatus,
   searchQuery,
   onSearchChange,
 }) => {
-  const [currentTime, setCurrentTime] = useState<string>('');
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [currentTime, setCurrentTime] = useState<string>("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('fa-IR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZone: 'Asia/Tehran',
+      const timeStr = now.toLocaleTimeString("fa-IR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        timeZone: "Asia/Tehran",
       });
-      const dateStr = now.toLocaleDateString('fa-IR', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-        timeZone: 'Asia/Tehran',
+      const dateStr = now.toLocaleDateString("fa-IR", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        timeZone: "Asia/Tehran",
       });
       setCurrentTime(`${timeStr} • ${dateStr}`);
     };
@@ -74,7 +79,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
                   زرپایش
                 </span>
                 <span className="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-bullion/15 text-bullion-light font-bold border border-bullion/30">
-                  LIVE
+                  TGJU
                 </span>
               </div>
               <span className="text-[10px] text-on-surface-variant hidden md:inline">
@@ -89,13 +94,15 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gain opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-gain"></span>
             </span>
-            <span className="text-xs text-gain-text font-medium">بازار باز است • همگام با دیتاسنتر</span>
+            <span className="text-xs text-gain-text font-medium">
+              {dataStatus}
+            </span>
           </div>
 
           {/* Clock (Desktop) */}
           <div className="hidden lg:flex items-center gap-1.5 text-on-surface-variant text-xs font-mono">
             <Clock className="w-3.5 h-3.5 text-outline" />
-            <span>{currentTime || 'در حال دریافت...'}</span>
+            <span>{currentTime || "در حال دریافت..."}</span>
           </div>
         </div>
 
@@ -104,6 +111,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           <div className="relative w-full">
             <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />
             <input
+              aria-label="جستجوی دارایی"
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -127,21 +135,21 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           {/* Toman / Rial Unit Toggle */}
           <div className="flex items-center p-0.5 bg-obsidian-card rounded-xl border border-white/[0.08] shadow-inner">
             <button
-              onClick={() => onToggleUnit('toman')}
+              onClick={() => onToggleUnit("toman")}
               className={`px-2.5 sm:px-3 py-1.5 text-xs rounded-lg font-bold transition-all ${
-                unit === 'toman'
-                  ? 'gold-gradient-btn'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                unit === "toman"
+                  ? "gold-gradient-btn"
+                  : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
               تومان
             </button>
             <button
-              onClick={() => onToggleUnit('rial')}
+              onClick={() => onToggleUnit("rial")}
               className={`px-2.5 sm:px-3 py-1.5 text-xs rounded-lg font-bold transition-all ${
-                unit === 'rial'
-                  ? 'gold-gradient-btn'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                unit === "rial"
+                  ? "gold-gradient-btn"
+                  : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
               ریال
@@ -160,15 +168,19 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
 
           {/* Audio Notification Toggle */}
           <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
+            onClick={onToggleSound}
             className={`p-2 rounded-xl border transition-all ${
               soundEnabled
-                ? 'text-bullion-light bg-bullion/10 border-bullion/30'
-                : 'text-on-surface-variant bg-obsidian-card border-white/[0.08]'
+                ? "text-bullion-light bg-bullion/10 border-bullion/30"
+                : "text-on-surface-variant bg-obsidian-card border-white/[0.08]"
             }`}
-            title={soundEnabled ? 'اعلان صوتی فعال است' : 'بی‌صدا'}
+            title={soundEnabled ? "اعلان صوتی فعال است" : "بی‌صدا"}
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4 text-bullion" /> : <VolumeX className="w-4 h-4" />}
+            {soundEnabled ? (
+              <Volume2 className="w-4 h-4 text-bullion" />
+            ) : (
+              <VolumeX className="w-4 h-4" />
+            )}
           </button>
 
           {/* Live Sync Button */}
@@ -178,7 +190,9 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
             className="p-2 text-on-surface-variant hover:text-bullion bg-obsidian-card hover:bg-obsidian-surface border border-white/[0.08] rounded-xl transition-all active:scale-95 disabled:opacity-50"
             title="تازه‌سازی زنده از TGJU"
           >
-            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin text-bullion' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isSyncing ? "animate-spin text-bullion" : ""}`}
+            />
           </button>
         </div>
       </div>
@@ -189,6 +203,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           <div className="relative w-full">
             <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" />
             <input
+              aria-label="جستجوی دارایی"
               type="text"
               autoFocus
               value={searchQuery}

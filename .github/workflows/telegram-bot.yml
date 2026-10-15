@@ -12,7 +12,7 @@ on:
     branches: [main]
     paths: ['az_be_ma_mabot/**', '.github/workflows/telegram-bot.yml']
   pull_request:
-    paths: ['az_be_ma_mabot/**', 'src/lib/rates.ts', 'src/types/market.ts', 'tests/**', '.github/workflows/telegram-bot.yml']
+    paths: ['az_be_ma_mabot/**', 'src/**', 'public/**', 'tests/**', '.github/workflows/telegram-bot.yml']
 permissions:
   contents: read
 concurrency:
