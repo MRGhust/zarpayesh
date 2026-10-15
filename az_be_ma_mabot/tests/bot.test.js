@@ -116,3 +116,13 @@ test('PNG has correct dimensions, valid zlib stream, flat prices and timestamp s
  assert.doesNotThrow(() => chartPng([{ at: 0, price: 1 }, { at: 1, price: 1 }]));
  if (process.env.CHART_PREVIEW) writeFileSync(process.env.CHART_PREVIEW, png);
 });
+
+test('untriggered alerts rotate fairly across groups beyond one batch', async () => {
+ const insert = sdk.sqlDb.prepare('INSERT INTO zp_alerts (id,chat_id,asset,direction,threshold) VALUES (?,?,?,?,?)');
+ for (let i = 1; i <= 30; i++) insert.run(`group-${i}`, -i, 'usd', 'above', 2000000);
+ insert.run('last-group', -31, 'usd', 'below', 2000000);
+ response(1000000);
+ assert.equal((await dispatch()).sent, 0);
+ assert.equal((await dispatch()).sent, 1);
+ assert.equal((await listAlerts(-31)).length, 0);
+});

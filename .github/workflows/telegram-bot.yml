@@ -71,6 +71,7 @@ jobs:
         env:
           TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}
         run: |
+          npx tgcloud fetch
           npm run deploy
           npx tgcloud migrate --safe
           npx tgcloud run endpoints/operator '{action:"register"}' --ctx '{operator:true}'

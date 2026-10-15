@@ -31,14 +31,17 @@ export async function dispatch() {
     await sendPrice(chat, items[sub.asset], sub, now); sent++;
     await db.update(subscriptions).set({ nextAt, leaseUntil: 0, failures: 0 }).where(and(eq(subscriptions.id, sub.id), eq(subscriptions.leaseUntil, lease))).run();
    } catch (error) {
-    if (error.code === 403 || (error.code === 400 && /chat not found|kicked|not enough rights/i.test(error.description || ''))) { await removeChat(chat.id); continue; }
+    if (error.code === 403 || (error.code === 400 && /chat not found|kicked/i.test(error.description || ''))) { await removeChat(chat.id); continue; }
     const delay = Math.max(Number(error.parameters?.retry_after || 0) * 1000, Math.min(3600000, 300000 * 2 ** Math.min(sub.failures, 4)));
     await db.update(subscriptions).set({ nextAt: now + delay, leaseUntil: 0, failures: sub.failures + 1 }).where(and(eq(subscriptions.id, sub.id), eq(subscriptions.leaseUntil, lease))).run();
     console.warn('Delivery deferred', { asset: sub.asset, code: error.code || 'transport' });
    }
   }
-  const pending = await db.select().from(alerts).where(and(lte(alerts.nextAt, now), lte(alerts.leaseUntil, now))).limit(30).all();
+  const pending = await db.select().from(alerts).where(and(lte(alerts.nextAt, now), lte(alerts.leaseUntil, now))).orderBy(alerts.nextAt).limit(30).all();
   for (const alert of pending) {
+   // Rotate checked alerts so inactive thresholds cannot starve later groups.
+   const checked = await db.update(alerts).set({ nextAt: now + 300000 }).where(and(eq(alerts.id, alert.id), eq(alerts.nextAt, alert.nextAt), lte(alerts.leaseUntil, now))).run();
+   if (!checked.rowsAffected) continue;
    const chat = await getChat(alert.chatId), item = items[alert.asset];
    if (chat.paused || inQuiet(chat, now) || !item) continue;
    if (!(alert.direction === 'above' ? item.priceRial >= alert.threshold : item.priceRial <= alert.threshold)) continue;
