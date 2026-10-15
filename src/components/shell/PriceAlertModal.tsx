@@ -1,158 +1,248 @@
-'use client';
-
-import React, { useState } from 'react';
-import { MarketItem, CurrencyUnit } from '@/types/market';
-import { X, BellRing, CheckCircle2 } from 'lucide-react';
-import { formatPrice } from '@/lib/formatters';
-
-interface PriceAlertModalProps {
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { X, BellRing, Trash2 } from "lucide-react";
+import { MarketItem, CurrencyUnit } from "@/types/market";
+import { formatPrice, parseLocalizedNumber } from "@/lib/formatters";
+import { BrowserAlert, readAlerts, saveAlerts } from "@/lib/alerts";
+interface Props {
   isOpen: boolean;
   onClose: () => void;
   items: MarketItem[];
   unit: CurrencyUnit;
+  initialSymbol: string;
 }
-
-export const PriceAlertModal: React.FC<PriceAlertModalProps> = ({
+export function PriceAlertModal({
   isOpen,
   onClose,
   items,
   unit,
-}) => {
-  const [selectedSymbol, setSelectedSymbol] = useState<string>(items[0]?.symbol || 'price_dollar_rl');
-  const [targetPrice, setTargetPrice] = useState<string>('');
-  const [condition, setCondition] = useState<'above' | 'below'>('above');
-  const [isSaved, setIsSaved] = useState<boolean>(false);
-
+  initialSymbol,
+}: Props) {
+  const [symbol, setSymbol] = useState("price_dollar_rl"),
+    [price, setPrice] = useState(""),
+    [condition, setCondition] = useState<"above" | "below">("above"),
+    [alerts, setAlerts] = useState<BrowserAlert[]>([]),
+    [notice, setNotice] = useState("");
+  const dialog = useRef<HTMLDivElement>(null),
+    close = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    setSymbol(initialSymbol);
+    setAlerts(readAlerts());
+    setNotice("");
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    close.current?.focus();
+    return () => {
+      document.body.style.overflow = overflow;
+      previous?.focus();
+    };
+  }, [isOpen, initialSymbol]);
   if (!isOpen) return null;
-
-  const currentItem = items.find((i) => i.symbol === selectedSymbol) || items[0];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!targetPrice) return;
-    setIsSaved(true);
-    setTimeout(() => {
-      setIsSaved(false);
-      onClose();
-    }, 1500);
-  };
-
+  const current = items.find((item) => item.symbol === symbol),
+    currency =
+      current?.id === "ons" ? "دلار" : unit === "rial" ? "ریال" : "تومان";
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-md bg-surface-container-low border border-white/[0.12] rounded-2xl shadow-2xl p-6 text-on-surface">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-              <BellRing className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-on-surface">ثبت هشدار هوشمند نوسان قیمت</h3>
-              <p className="text-xs text-on-surface-variant">اطلاع‌رسانی بلادرنگ تغییر نرخ</p>
-            </div>
-          </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/75 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        ref={dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="alert-title"
+        className="w-full max-w-lg max-h-[90dvh] overflow-y-auto bg-surface-container-low border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") onClose();
+          if (e.key === "Tab") {
+            const elements = dialog.current?.querySelectorAll<HTMLElement>(
+              "button:not(:disabled),input,select",
+            );
+            if (!elements?.length) return;
+            const first = elements[0],
+              last = elements[elements.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <h2 id="alert-title" className="font-bold flex items-center gap-2">
+            <BellRing className="text-bullion w-5 h-5" />
+            هشدار قیمت
+          </h2>
           <button
+            ref={close}
+            aria-label="بستن هشدار"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all"
+            className="p-2"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {isSaved ? (
-          <div className="py-8 flex flex-col items-center justify-center gap-3 text-center">
-            <CheckCircle2 className="w-12 h-12 text-secondary animate-bounce" />
-            <h4 className="text-base font-bold text-on-surface">هشدار با موفقیت ثبت شد</h4>
-            <p className="text-xs text-on-surface-variant">
-              به محض رسیدن قیمت به سطح مدنظر، سیستم با آلارم صوتی شما را مطلع خواهد کرد.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
-            {/* Asset Selection */}
-            <div>
-              <label className="block text-xs font-medium text-on-surface-variant mb-1.5">
-                انتخاب دارایی یا ارز
-              </label>
-              <select
-                value={selectedSymbol}
-                onChange={(e) => setSelectedSymbol(e.target.value)}
-                className="w-full bg-surface-container-high text-on-surface border border-white/[0.1] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-primary/50"
-              >
-                {items.map((it) => (
-                  <option key={it.symbol} value={it.symbol}>
-                    {it.title} ({formatPrice(it.priceToman, unit, true, it.symbol === 'ons')})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Current Reference Price */}
-            {currentItem && (
-              <div className="bg-surface-container p-3 rounded-xl border border-white/[0.06] flex items-center justify-between text-xs">
-                <span className="text-on-surface-variant">نرخ فعلی بازار:</span>
-                <span className="font-mono font-bold text-primary">
-                  {formatPrice(currentItem.priceToman, unit, true, currentItem.symbol === 'ons')}
-                </span>
-              </div>
-            )}
-
-            {/* Condition */}
-            <div>
-              <label className="block text-xs font-medium text-on-surface-variant mb-1.5">
-                شرط فعال‌سازی
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCondition('above')}
-                  className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all ${
-                    condition === 'above'
-                      ? 'bg-secondary/15 text-secondary border-secondary/40 font-bold'
-                      : 'bg-surface-container-high text-on-surface-variant border-white/[0.06]'
-                  }`}
-                >
-                  صعودی (رسیدن یا عبور از سقف)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCondition('below')}
-                  className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all ${
-                    condition === 'below'
-                      ? 'bg-error/15 text-error border-error/40 font-bold'
-                      : 'bg-surface-container-high text-on-surface-variant border-white/[0.06]'
-                  }`}
-                >
-                  نزولی (رسیدن یا افت به زیر کف)
-                </button>
-              </div>
-            </div>
-
-            {/* Target Price */}
-            <div>
-              <label className="block text-xs font-medium text-on-surface-variant mb-1.5">
-                قیمت هدف ({unit === 'toman' ? 'تومان' : 'ریال'})
-              </label>
-              <input
-                type="number"
-                value={targetPrice}
-                onChange={(e) => setTargetPrice(e.target.value)}
-                placeholder="مثلاً ۶۹۰۰۰"
-                required
-                className="w-full bg-surface-container-high text-on-surface border border-white/[0.1] rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-primary/50"
-              />
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              className="mt-2 w-full py-2.5 bg-primary-container hover:bg-primary text-on-primary-container font-bold text-xs rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-98"
+        <p className="text-xs text-on-surface-variant leading-7 mb-5">
+          هشدار در همین مرورگر ذخیره می‌شود و وقتی سایت باز است بررسی می‌شود.
+          برای اعلان در زمان بسته بودن سایت، از بات تلگرام استفاده کنید.
+        </p>
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const value = parseLocalizedNumber(price);
+            if (!current || !Number.isFinite(value) || value <= 0) {
+              setNotice("قیمت هدف معتبر و مثبت وارد کنید.");
+              return;
+            }
+            if (alerts.length >= 30) {
+              setNotice("حداکثر ۳۰ هشدار مجاز است.");
+              return;
+            }
+            try {
+              const next = [
+                ...alerts,
+                {
+                  id: crypto.randomUUID(),
+                  symbol,
+                  threshold:
+                    current.id === "ons" || unit === "rial"
+                      ? value
+                      : value * 10,
+                  direction: condition,
+                  triggered: false,
+                },
+              ];
+              saveAlerts(next);
+              setAlerts(next);
+              setNotice("هشدار در این مرورگر ذخیره شد.");
+              setPrice("");
+            } catch {
+              setNotice("ذخیره‌سازی مرورگر در دسترس نیست.");
+            }
+          }}
+        >
+          <label className="block text-xs">
+            دارایی
+            <select
+              aria-label="دارایی هشدار"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value)}
+              className="w-full mt-2 bg-obsidian-card rounded-xl border border-white/10 p-3"
             >
-              فعال‌سازی هشدار هوشمند
-            </button>
-          </form>
+              {items.map((item) => (
+                <option key={item.id} value={item.symbol}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {current && (
+            <p className="text-xs text-on-surface-variant">
+              قیمت فعلی:{" "}
+              <span className="font-num text-bullion">
+                {formatPrice(
+                  current.priceToman,
+                  unit,
+                  true,
+                  current.id === "ons",
+                )}
+              </span>
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            {(["above", "below"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={condition === value}
+                className={`rounded-xl py-3 text-xs ${condition === value ? "gold-gradient-btn" : "bg-obsidian-card"}`}
+                onClick={() => setCondition(value)}
+              >
+                {value === "above" ? "رسیدن به سقف" : "رسیدن به کف"}
+              </button>
+            ))}
+          </div>
+          <label className="block text-xs">
+            قیمت هدف ({currency})
+            <input
+              aria-label="قیمت هدف"
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+              className="mt-2 w-full bg-obsidian-card border border-white/10 rounded-xl p-3 font-num"
+              dir="ltr"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={!current}
+            className="w-full gold-gradient-btn py-3 rounded-xl text-sm"
+          >
+            ذخیرهٔ هشدار
+          </button>
+          <p role="status" className="text-xs text-bullion">
+            {notice}
+          </p>
+        </form>
+        {alerts.length > 0 && (
+          <div className="mt-6 border-t border-white/10 pt-4">
+            <h3 className="text-sm font-bold mb-3">هشدارهای این مرورگر</h3>
+            {alerts.map((alert) => {
+              const item = items.find((i) => i.symbol === alert.symbol);
+              return (
+                <div
+                  key={alert.id}
+                  className="flex justify-between items-center gap-3 py-3 border-b border-white/5 text-xs"
+                >
+                  <div>
+                    <p>
+                      {item?.title || alert.symbol} •{" "}
+                      {alert.triggered
+                        ? "فعال شده"
+                        : alert.direction === "above"
+                          ? "سقف"
+                          : "کف"}
+                    </p>
+                    <p className="font-num mt-1 text-on-surface-variant">
+                      {formatPrice(
+                        item?.id === "ons"
+                          ? alert.threshold
+                          : alert.threshold / 10,
+                        unit,
+                        true,
+                        item?.id === "ons",
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    aria-label={`حذف هشدار ${item?.title || alert.symbol}`}
+                    onClick={() => {
+                      try {
+                        const next = alerts.filter((a) => a.id !== alert.id);
+                        saveAlerts(next);
+                        setAlerts(next);
+                      } catch {
+                        setNotice("حذف هشدار ناموفق بود.");
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 text-loss-text" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
   );
-};
+}
