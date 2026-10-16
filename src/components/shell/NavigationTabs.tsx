@@ -46,9 +46,9 @@ export const NavigationTabs: React.FC<NavigationTabsProps> = ({
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-xs md:text-sm transition-all border-b-2 font-medium ${
+              className={`flex items-center gap-2 px-4 py-4 text-xs md:text-sm transition-all font-medium ${
                 isActive
-                  ? 'text-primary font-bold border-primary bg-surface-container/60 shadow-sm'
+                  ? 'text-primary font-bold border-primary border-b-[3px] transition-all duration-300 bg-surface-container/60 shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface border-transparent hover:bg-surface-container/30'
               }`}
             >
