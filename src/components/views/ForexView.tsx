@@ -87,15 +87,41 @@ export function ForexView({
             return (
               <article
                 key={item.id}
-                className={`glass-panel rounded-2xl p-5 min-w-0 ${selected === item.symbol ? "border-amber-400/40" : ""}`}
+                className={`glass-panel rounded-2xl p-5 min-w-0 relative overflow-hidden ${selected === item.symbol ? "border-amber-400/40" : ""}`}
               >
-                <div className="flex justify-between gap-2">
-                  <div>
-                    <h2 className="font-bold text-sm">{item.title}</h2>
-                    <p className="text-xs text-on-surface-variant mt-1">
-                      {item.id.toUpperCase()}{" "}
-                      {item.dataQuality === "estimated" ? "• تخمینی" : ""}
-                    </p>
+                {/* Background Flag */}
+                {item.id !== "ons" && (
+                  <div className="absolute -left-4 -top-4 opacity-5 pointer-events-none grayscale select-none">
+                    <img
+                      src={`/flags/${item.id.toLowerCase()}.png`}
+                      alt=""
+                      className="w-32 h-32 object-cover rounded-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="flex justify-between gap-2 relative z-10">
+                  <div className="flex items-center gap-3">
+                    {/* Small Inline Flag */}
+                    {item.id !== "ons" && (
+                       <img
+                         src={`/flags/${item.id.toLowerCase()}.png`}
+                         alt={item.title}
+                         className="w-6 h-6 object-cover rounded-full bg-surface-container shadow-sm"
+                         onError={(e) => {
+                           (e.target as HTMLImageElement).style.display = 'none';
+                         }}
+                       />
+                    )}
+                    <div>
+                      <h2 className="font-bold text-sm">{item.title}</h2>
+                      <p className="text-xs text-on-surface-variant mt-1">
+                        {item.id.toUpperCase()}{" "}
+                        {item.dataQuality === "estimated" ? "• تخمینی" : ""}
+                      </p>
+                    </div>
                   </div>
                   <span
                     dir="ltr"
