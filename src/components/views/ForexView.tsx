@@ -105,7 +105,7 @@ export function ForexView({
                   </span>
                 </div>
                 <p
-                  className="font-num text-4xl font-black mt-6 mb-2 tracking-normal text-bullion-light"
+                  className="font-num text-3xl sm:text-4xl font-black mt-6 mb-2 tracking-normal text-bullion-light"
                   dir="ltr"
                 >
                   {formatPrice(item.priceToman, unit, false, item.id === "ons")}{" "}

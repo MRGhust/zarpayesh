@@ -47,7 +47,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all active:scale-95 ${
+              className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-2xl transition-all active:scale-95 ${
                 isActive
                   ? "bg-bullion/20 border border-bullion/30 text-bullion-light font-bold shadow-[inset_0_1px_0_0_rgba(245,158,11,0.2)]"
                   : "text-on-surface-variant hover:text-on-surface hover:bg-white/[0.04]"
@@ -55,7 +55,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({
             >
               <div className="relative">
                 <Icon
-                  className={`w-6 h-6 ${isActive ? "text-bullion-light" : "text-on-surface-variant"}`}
+                  className={`w-5 h-5 sm:w-6 sm:h-6 ${isActive ? "text-bullion-light" : "text-on-surface-variant"}`}
                 />
                 {isActive && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-bullion animate-pulse" />

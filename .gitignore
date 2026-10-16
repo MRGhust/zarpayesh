@@ -37,3 +37,4 @@ stitch_.zip
 stitch_extracted
 scratch/
 .env*
+server.log

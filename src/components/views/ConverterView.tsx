@@ -117,7 +117,7 @@ export function ConverterView({
           aria-live="polite"
         >
           <p className="text-xs text-on-surface-variant mb-3">مقدار معادل</p>
-          <output className="font-num text-5xl font-black text-bullion drop-shadow-md break-words">
+          <output className="font-num text-4xl sm:text-5xl font-black text-bullion drop-shadow-md break-words">
             {valid
               ? result.toLocaleString("fa-IR", {
                   maximumFractionDigits:
