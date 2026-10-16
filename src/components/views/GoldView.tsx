@@ -96,7 +96,7 @@ export function GoldView({
           وزن و درصدهای درج‌شده در فاکتور فروشنده را وارد کنید. نرخ مالیات و سود
           به صورت خودکار فرض نمی‌شود.
         </p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {(
             [
               ["weight", "وزن (گرم)"],
@@ -105,7 +105,7 @@ export function GoldView({
               ["tax", "مالیات بر اجرت و سود (درصد)"],
             ] as const
           ).map(([key, label]) => (
-            <label className="text-xs" key={key}>
+            <label className="flex flex-col gap-1 text-xs" key={key}>
               {label}
               <input
                 aria-label={label}
@@ -121,7 +121,10 @@ export function GoldView({
           ))}
         </div>
         <div className="mt-5 pt-5 border-t border-white/5 flex flex-wrap justify-between gap-3">
-          <span className="text-sm">جمع برآوردی</span>
+          <div className="flex flex-col">
+            <span className="text-sm">جمع برآوردی</span>
+            <p className="w-full text-xs text-on-surface-variant mt-2 text-left">شامل اجرت، سود و مالیات</p>
+          </div>
           <output className="font-num text-2xl text-bullion" aria-live="polite">
             {valid ? formatPrice(total, unit, true) : "ورودی یا نرخ معتبر نیست"}
           </output>
@@ -136,7 +139,7 @@ export function GoldView({
               <p className="font-num text-xl text-bullion my-4">
                 {formatPrice(item.priceToman, unit, true)}
               </p>
-              <p className="text-xs text-on-surface-variant font-num">
+              <p className="text-xs text-on-surface-variant font-num bg-loss/10 text-loss-text px-2 py-1 rounded-md inline-block mt-2">
                 حباب برآوردی:{" "}
                 {gold?.dataQuality === "live" && item.dataQuality === "live"
                   ? formatPrice(item.bubbleToman ?? 0, unit, true)

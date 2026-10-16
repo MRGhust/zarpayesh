@@ -116,7 +116,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="جستجوی نماد، ارز یا مسکوک (دلار، امامی، طلا، لیر)..."
-              className="w-full bg-obsidian-card text-on-surface placeholder:text-on-surface-variant/50 text-xs rounded-xl py-2 pr-10 pl-3 border border-white/[0.08] focus:outline-none focus:border-bullion/60 focus:ring-1 focus:ring-bullion/60 transition-all"
+              className="w-full bg-obsidian-card text-on-surface placeholder:text-on-surface-variant/50 text-xs rounded-xl py-2 pr-10 pl-3 border border-white/[0.08] focus:outline-none focus:border-transparent focus:ring-2 focus:ring-bullion transition-all"
             />
           </div>
         </div>
@@ -136,9 +136,9 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
           <div className="flex items-center p-0.5 bg-obsidian-card rounded-xl border border-white/[0.08] shadow-inner">
             <button
               onClick={() => onToggleUnit("toman")}
-              className={`px-2.5 sm:px-3 py-1.5 text-xs rounded-lg font-bold transition-all ${
+              className={`px-3 sm:px-4 py-2 text-xs rounded-lg font-bold transition-all ${
                 unit === "toman"
-                  ? "gold-gradient-btn"
+                  ? "bg-bullion text-on-primary shadow-sm"
                   : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
@@ -146,9 +146,9 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
             </button>
             <button
               onClick={() => onToggleUnit("rial")}
-              className={`px-2.5 sm:px-3 py-1.5 text-xs rounded-lg font-bold transition-all ${
+              className={`px-3 sm:px-4 py-2 text-xs rounded-lg font-bold transition-all ${
                 unit === "rial"
-                  ? "gold-gradient-btn"
+                  ? "bg-bullion text-on-primary shadow-sm"
                   : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
@@ -209,7 +209,7 @@ export const MasterHeader: React.FC<MasterHeaderProps> = ({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="جستجوی نماد، ارز یا مسکوک..."
-              className="w-full bg-obsidian-card text-on-surface placeholder:text-on-surface-variant/50 text-xs rounded-xl py-2.5 pr-10 pl-3 border border-bullion/40 focus:outline-none focus:ring-1 focus:ring-bullion"
+              className="w-full bg-obsidian-card text-on-surface placeholder:text-on-surface-variant/50 text-xs rounded-xl py-2.5 pr-10 pl-3 border border-bullion/40 focus:outline-none focus:border-transparent focus:ring-2 focus:ring-bullion transition-all"
             />
           </div>
         </div>

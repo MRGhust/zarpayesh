@@ -92,7 +92,7 @@ export function ConverterView({
               setSource(target);
               setTarget(source);
             }}
-            className="gold-gradient-btn p-3 rounded-xl"
+            className="gold-gradient-btn p-3 rounded-xl hover:scale-110 active:scale-95 transition-transform duration-200"
           >
             <ArrowLeftRight className="w-5 h-5" />
           </button>
@@ -117,7 +117,7 @@ export function ConverterView({
           aria-live="polite"
         >
           <p className="text-xs text-on-surface-variant mb-3">مقدار معادل</p>
-          <output className="font-num text-3xl sm:text-4xl text-bullion break-words">
+          <output className="font-num text-5xl font-black text-bullion drop-shadow-md break-words">
             {valid
               ? result.toLocaleString("fa-IR", {
                   maximumFractionDigits:

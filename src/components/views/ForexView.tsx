@@ -99,13 +99,13 @@ export function ForexView({
                   </div>
                   <span
                     dir="ltr"
-                    className={`font-num text-xs ${percent.isNeutral ? "text-on-surface-variant" : percent.isPositive ? "text-gain-text" : "text-loss-text"}`}
+                    className={`font-num text-xs px-2 py-1 bg-white/5 rounded-md backdrop-blur-sm ${percent.isNeutral ? "text-on-surface-variant" : percent.isPositive ? "text-gain-text" : "text-loss-text"}`}
                   >
                     {percent.text}
                   </span>
                 </div>
                 <p
-                  className="font-num text-3xl font-extrabold mt-5 tracking-normal"
+                  className="font-num text-4xl font-black mt-6 mb-2 tracking-normal text-bullion-light"
                   dir="ltr"
                 >
                   {formatPrice(item.priceToman, unit, false, item.id === "ons")}{" "}
@@ -117,7 +117,7 @@ export function ForexView({
                         : "تومان"}
                   </span>
                 </p>
-                <div className="grid grid-cols-2 gap-2 mt-4 text-xs text-on-surface-variant font-num">
+                <div className="grid grid-cols-2 gap-2 mt-6 pt-4 border-t border-white/10 text-xs text-on-surface-variant font-num">
                   <span>
                     کمترین:{" "}
                     {formatPrice(item.lowToman, unit, false, item.id === "ons")}
