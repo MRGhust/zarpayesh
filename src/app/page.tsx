@@ -55,7 +55,8 @@ export default function HomePage() {
             : "",
         );
       }
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") return;
       if (request.current === controller)
         setError(
           "ارتباط با منبع برقرار نشد؛ آخرین نرخ‌های دریافت‌شده ممکن است قدیمی باشند.",
