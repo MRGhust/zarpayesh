@@ -1,5 +1,5 @@
 import { api } from "sdk";
-import { UserError } from "../lib/config.js";
+import { UserError, assetId } from "../lib/config.js";
 import {
   PRIVATE_ACTIONS,
   PRIVATE_KEYBOARD,
@@ -13,10 +13,18 @@ export default async function (message) {
     await removeChat(message.chat.id);
     return;
   }
-  const raw =
+  let raw =
     message.chat.type === "private"
       ? PRIVATE_ACTIONS[message.text] || message.text
       : message.text;
+  if (
+    message.chat.type === "private" &&
+    raw &&
+    !raw.startsWith("/") &&
+    assetId(raw)
+  ) {
+    raw = `/price ${assetId(raw)}`;
+  }
   if (!raw?.startsWith("/")) {
     if (message.chat.type === "private" && message.text)
       await api.sendMessage({

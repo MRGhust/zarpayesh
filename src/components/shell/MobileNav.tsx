@@ -37,7 +37,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden bg-obsidian-card/95 backdrop-blur-2xl border-t border-white/[0.08] shadow-[0_-8px_30px_rgba(0,0,0,0.6)] px-2 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <nav
+      aria-label="ناوبری موبایل"
+      className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-obsidian-950/95 backdrop-blur-2xl border-t border-white/[0.08] px-2 py-1 pb-[max(0.35rem,env(safe-area-inset-bottom))]"
+    >
       <div className="grid grid-cols-4 gap-1 items-center">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -45,24 +48,24 @@ export const MobileNav: React.FC<MobileNavProps> = ({
           return (
             <button
               key={tab.id}
+              type="button"
               onClick={() => onTabChange(tab.id)}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all active:scale-95 ${
+              className={`min-h-[48px] flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all active:scale-95 whitespace-nowrap ${
                 isActive
-                  ? "bg-bullion/20 border border-bullion/30 text-bullion-light font-bold shadow-[inset_0_1px_0_0_rgba(245,158,11,0.2)]"
-                  : "text-on-surface-variant hover:text-on-surface hover:bg-white/[0.04]"
+                  ? "bg-bullion/15 border border-bullion/35 text-bullion-light font-bold"
+                  : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
-              <div className="relative">
-                <Icon
-                  className={`w-6 h-6 ${isActive ? "text-bullion-light" : "text-on-surface-variant"}`}
-                />
-                {isActive && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-bullion animate-pulse" />
-                )}
-              </div>
+              <Icon
+                className={`w-5 h-5 ${
+                  isActive ? "text-bullion-light" : "text-on-surface-variant"
+                }`}
+              />
               <span
-                className={`text-[11px] mt-1 ${isActive ? "text-bullion font-extrabold" : "text-on-surface-variant"}`}
+                className={`text-[11px] mt-1 leading-none ${
+                  isActive ? "text-bullion font-bold" : "text-on-surface-variant"
+                }`}
               >
                 {tab.label}
               </span>

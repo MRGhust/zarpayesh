@@ -8,7 +8,7 @@ export const PRIVATE_KEYBOARD = {
   ],
   resize_keyboard: true,
   is_persistent: true,
-  input_field_placeholder: "قیمت، نمودار یا تنظیمات را انتخاب کنید",
+  input_field_placeholder: "نام دارایی، نمودار یا تنظیمات را انتخاب کنید",
 };
 export const PRIVATE_ACTIONS = {
   "💵 دلار": "/price usd",
@@ -44,7 +44,11 @@ export function privatePanel(name, asset) {
       reply_markup: {
         inline_keyboard: [
           [
+            button("۱ ساعت اخیر", `pv:plot:${asset}:1`),
             button("۲۴ ساعت اخیر", `pv:plot:${asset}:24`),
+          ],
+          [
+            button("۳ روز اخیر", `pv:plot:${asset}:72`),
             button("۷ روز اخیر", `pv:plot:${asset}:168`),
           ],
           [button("↩️ انتخاب ارز", "pv:charts")],
@@ -70,4 +74,4 @@ export function privatePanel(name, asset) {
   };
 }
 export const PRIVATE_WELCOME =
-  "✨ به زرپایش خوش آمدید\n\nقیمت ارز، طلا و سکه را ببینید، نمودار واقعی بگیرید و برای خودتان یا گروه برنامهٔ اعلام قیمت بسازید.\n\nاز دکمه‌های پایین شروع کنید؛ برای جزئیات /help را بزنید.";
+  "✨ به زرپایش خوش آمدید\n\nقیمت ارز، طلا و سکه را ببینید، نمودار واقعی بگیرید و برای خودتان یا گروه برنامهٔ اعلام قیمت بسازید.\n\nمی‌توانید نام دارایی (مثلاً دلار، طلا، سکه) را مستقیماً بنویسید یا از دکمه‌های پایین شروع کنید؛ برای جزئیات /help را بزنید.";

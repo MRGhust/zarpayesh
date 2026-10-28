@@ -1,22 +1,33 @@
 "use client";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
   RefreshCw,
   TrendingUp,
+  TrendingDown,
   LineChart,
   ChartCandlestick,
+  BarChart3,
+  Activity,
+  Layers,
 } from "lucide-react";
 import { CurrencyUnit } from "@/types/market";
-import { HistoryPoint, HistoryRange } from "@/lib/history";
-import { formatPrice, toPersianDigits } from "@/lib/formatters";
+import {
+  HistoryPoint,
+  HistoryRange,
+  computeHistoryStats,
+} from "@/lib/history";
+import { formatPrice, formatPercent, toPersianDigits } from "@/lib/formatters";
+
 const RANGES: { id: HistoryRange; label: string }[] = [
   { id: "1H", label: "۱ ساعت" },
   { id: "1D", label: "۱ روز" },
   { id: "1W", label: "۱ هفته" },
   { id: "1M", label: "۱ ماه" },
   { id: "3M", label: "۳ ماه" },
+  { id: "6M", label: "۶ ماه" },
   { id: "1Y", label: "۱ سال" },
 ];
+
 export function PriceHistoryChart({
   symbol,
   title,
@@ -27,7 +38,11 @@ export function PriceHistoryChart({
   unit: CurrencyUnit;
 }) {
   const [range, setRange] = useState<HistoryRange>("1W"),
-    [kind, setKind] = useState<"line" | "candle">("line");
+    [kind, setKind] = useState<"line" | "candle" | "bar">("line"),
+    [showSMA, setShowSMA] = useState(true),
+    [showBands, setShowBands] = useState(false),
+    [showExtremes, setShowExtremes] = useState(true);
+
   const [data, setData] = useState<{
     key: string;
     points: HistoryPoint[];
@@ -37,8 +52,10 @@ export function PriceHistoryChart({
     [loading, setLoading] = useState(false),
     [retry, setRetry] = useState(0),
     [hover, setHover] = useState<number | null>(null);
+
   const key = `${symbol}:${range}`,
     gradient = useId().replaceAll(":", "");
+
   useEffect(() => {
     let disposed = false,
       controller: AbortController | undefined;
@@ -80,95 +97,359 @@ export function PriceHistoryChart({
       clearInterval(interval);
     };
   }, [symbol, range, key, retry]);
-  const points = data?.key === key ? data.points : [];
-  const values = points.flatMap((p) =>
-    kind === "candle" ? [p.low ?? p.price, p.high ?? p.price] : [p.price],
+
+  const points = useMemo(
+    () => (data?.key === key ? data.points : []),
+    [data, key],
   );
+  const stats = useMemo(() => computeHistoryStats(points), [points]);
+
+  // Compute Simple Moving Average (SMA-7) & Bollinger Bands (period 7, 1.8 stdDev)
+  const indicators = useMemo(() => {
+    const period = Math.min(7, Math.max(3, Math.floor(points.length / 4)));
+    const sma: { at: number; value: number }[] = [];
+    const upper: { at: number; value: number }[] = [];
+    const lower: { at: number; value: number }[] = [];
+
+    for (let i = 0; i < points.length; i++) {
+      const start = Math.max(0, i - period + 1);
+      const slice = points.slice(start, i + 1);
+      const mean = slice.reduce((acc, p) => acc + p.price, 0) / slice.length;
+      sma.push({ at: points[i].at, value: mean });
+
+      if (slice.length >= 2) {
+        const variance =
+          slice.reduce((acc, p) => acc + (p.price - mean) ** 2, 0) /
+          slice.length;
+        const std = Math.sqrt(variance);
+        upper.push({ at: points[i].at, value: mean + std * 1.8 });
+        lower.push({ at: points[i].at, value: Math.max(0, mean - std * 1.8) });
+      } else {
+        upper.push({ at: points[i].at, value: mean });
+        lower.push({ at: points[i].at, value: mean });
+      }
+    }
+    return { sma, upper, lower };
+  }, [points]);
+
+  const values = points.flatMap((p, idx) => {
+    const base =
+      kind !== "line" ? [p.low ?? p.price, p.high ?? p.price] : [p.price];
+    if (showBands && indicators.upper[idx] && indicators.lower[idx]) {
+      base.push(indicators.upper[idx].value, indicators.lower[idx].value);
+    }
+    return base;
+  });
+
   const lo = values.length ? Math.min(...values) : 0,
     hi = values.length ? Math.max(...values) : 1;
-  const pad = (hi - lo) * 0.08 || Math.max(hi * 0.0001, 1),
+  const pad = (hi - lo) * 0.1 || Math.max(hi * 0.0001, 1),
     min = lo - pad,
     max = hi + pad;
+
+  const plotLeft = 104,
+    plotRight = 780,
+    plotTop = 26,
+    plotBottom = 248,
+    histTop = 258,
+    histBottom = 288;
+  const plotW = plotRight - plotLeft;
+  const plotH = plotBottom - plotTop;
+
   const x = (at: number) =>
-    92 +
+    plotLeft +
     ((at - (points[0]?.at || 0)) /
       ((points.at(-1)?.at || 1) - (points[0]?.at || 0) || 1)) *
-      680;
-  const y = (price: number) => 270 - ((price - min) / (max - min)) * 240;
-  const displayPrice = (value: number) =>
-    formatPrice(
-      symbol === "ons" ? value : value / 10,
-      unit,
-      false,
-      symbol === "ons",
-    );
-  const date = (at: number) =>
+      plotW;
+  const y = (price: number) =>
+    plotBottom - ((price - min) / (max - min || 1)) * plotH;
+
+  const isOunce = symbol === "ons";
+  const unitLabel = isOunce ? "دلار" : unit === "rial" ? "ریال" : "تومان";
+
+  const displayPrice = (value: number, withUnit = false) =>
+    formatPrice(isOunce ? value : value / 10, unit, withUnit, isOunce);
+
+  const date = (at: number, showTime = data?.resolution === "intraday") =>
     new Date(at).toLocaleString("fa-IR", {
       timeZone: "Asia/Tehran",
       month: "short",
       day: "numeric",
-      ...(data?.resolution === "intraday"
-        ? { hour: "2-digit" as const, minute: "2-digit" as const }
-        : {}),
+      ...(showTime ? { hour: "2-digit" as const, minute: "2-digit" as const } : {}),
     });
-  const selected = points[hover ?? points.length - 1];
+
+  const activeIdx = hover ?? points.length - 1;
+  const selected = points[activeIdx];
+  const prevPoint = activeIdx > 0 ? points[activeIdx - 1] : points[0];
+  const selectedDeltaPct =
+    selected && points[0] && points[0].price > 0
+      ? ((selected.price - (points[0].open ?? points[0].price)) /
+          (points[0].open ?? points[0].price)) *
+        100
+      : 0;
+  const stepDeltaPct =
+    selected && prevPoint && prevPoint.price > 0
+      ? ((selected.price - prevPoint.price) / prevPoint.price) * 100
+      : 0;
+
   const path = points
-    .map((p, i) => `${i ? "L" : "M"}${x(p.at)},${y(p.price)}`)
+    .map((p, i) => `${i ? "L" : "M"}${x(p.at).toFixed(1)},${y(p.price).toFixed(1)}`)
     .join(" ");
+
+  const smaPath = indicators.sma
+    .map(
+      (p, i) =>
+        `${i ? "L" : "M"}${x(p.at).toFixed(1)},${y(p.value).toFixed(1)}`,
+    )
+    .join(" ");
+
+  const bandPath =
+    indicators.upper.length >= 2
+      ? `${indicators.upper
+          .map(
+            (p, i) =>
+              `${i ? "L" : "M"}${x(p.at).toFixed(1)},${y(p.value).toFixed(1)}`,
+          )
+          .join(" ")} ${[...indicators.lower]
+          .reverse()
+          .map((p) => `L${x(p.at).toFixed(1)},${y(p.value).toFixed(1)}`)
+          .join(" ")} Z`
+      : "";
+
+  // Find High & Low point indices for on-chart callout pins
+  const { maxIdx, minIdx, maxDelta } = useMemo(() => {
+    let hiI = 0,
+      loI = 0,
+      mDelta = 0.0001;
+    for (let i = 0; i < points.length; i++) {
+      if ((points[i].high ?? points[i].price) >= (points[hiI].high ?? points[hiI].price))
+        hiI = i;
+      if ((points[i].low ?? points[i].price) <= (points[loI].low ?? points[loI].price))
+        loI = i;
+      if (i > 0) {
+        const d = Math.abs(points[i].price - points[i - 1].price);
+        if (d > mDelta) mDelta = d;
+      }
+    }
+    return { maxIdx: hiI, minIdx: loI, maxDelta: mDelta };
+  }, [points]);
+
+  const isPositivePeriod = (stats?.changePercent ?? 0) >= 0;
+  const strokeColor = isPositivePeriod ? "#fbbf24" : "#fb7185";
+
   return (
     <section
-      className="glass-panel rounded-2xl p-4 sm:p-6 min-w-0"
+      id="market-chart-section"
+      className="glass-panel rounded-2xl p-4 sm:p-6 min-w-0 border border-white/[0.08]"
       aria-label={`نمودار تاریخی ${title}`}
     >
-      <div className="flex flex-wrap justify-between gap-4 mb-5">
+      {/* Top Header & Controls */}
+      <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
         <div>
-          <h2 className="font-bold flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-bullion" />
-            {title}
-          </h2>
-          <p className="text-xs text-on-surface-variant mt-2">
-            تاریخچهٔ واقعی TGJU • زمان تهران •{" "}
-            {symbol === "ons" ? "دلار" : unit === "rial" ? "ریال" : "تومان"}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="font-bold text-base sm:text-lg flex items-center gap-2 text-on-surface">
+              {isPositivePeriod ? (
+                <TrendingUp className="w-5 h-5 text-bullion shrink-0" />
+              ) : (
+                <TrendingDown className="w-5 h-5 text-loss-text shrink-0" />
+              )}
+              <span>نمودار تکنیکال {title}</span>
+            </h2>
+            {stats && (
+              <span
+                dir="ltr"
+                className={`font-num text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                  stats.changePercent > 0
+                    ? "bg-gain/15 text-gain-text border-gain/30"
+                    : stats.changePercent < 0
+                      ? "bg-loss/15 text-loss-text border-loss/30"
+                      : "bg-white/5 text-on-surface-variant border-white/10"
+                }`}
+              >
+                {formatPercent(stats.changePercent).text}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-on-surface-variant mt-1.5">
+            تاریخچهٔ واقعی TGJU • افق زمانی تهران • واحد نمایش: {unitLabel}
           </p>
         </div>
-        <div className="flex gap-1 items-center" aria-label="نوع نمودار">
-          <button
-            aria-label="نمودار خطی"
-            aria-pressed={kind === "line"}
-            onClick={() => setKind("line")}
-            className={`p-2 rounded-lg ${kind === "line" ? "gold-gradient-btn" : "bg-obsidian-card"}`}
+
+        {/* Chart Type & Indicator Controls */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div
+            className="flex items-center p-1 bg-obsidian-950/90 rounded-xl border border-white/[0.07]"
+            role="group"
+            aria-label="نوع نمودار"
           >
-            <LineChart className="w-4 h-4" />
-          </button>
-          <button
-            aria-label="نمودار شمعی"
-            aria-pressed={kind === "candle"}
-            onClick={() => setKind("candle")}
-            className={`p-2 rounded-lg ${kind === "candle" ? "gold-gradient-btn" : "bg-obsidian-card"}`}
-          >
-            <ChartCandlestick className="w-4 h-4" />
-          </button>
+            <button
+              aria-label="نمودار خطی"
+              aria-pressed={kind === "line"}
+              onClick={() => setKind("line")}
+              className={`min-h-[36px] px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
+                kind === "line"
+                  ? "gold-gradient-btn"
+                  : "text-on-surface-variant hover:text-on-surface"
+              }`}
+            >
+              <LineChart className="w-4 h-4" />
+              <span className="hidden sm:inline">خطی</span>
+            </button>
+            <button
+              aria-label="نمودار شمعی"
+              aria-pressed={kind === "candle"}
+              onClick={() => setKind("candle")}
+              className={`min-h-[36px] px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
+                kind === "candle"
+                  ? "gold-gradient-btn"
+                  : "text-on-surface-variant hover:text-on-surface"
+              }`}
+            >
+              <ChartCandlestick className="w-4 h-4" />
+              <span className="hidden sm:inline">شمعی</span>
+            </button>
+            <button
+              aria-label="نمودار میله‌ای OHLC"
+              aria-pressed={kind === "bar"}
+              onClick={() => setKind("bar")}
+              className={`min-h-[36px] px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
+                kind === "bar"
+                  ? "gold-gradient-btn"
+                  : "text-on-surface-variant hover:text-on-surface"
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">میله‌ای</span>
+            </button>
+          </div>
+
           <button
             aria-label="تازه‌سازی نمودار"
             onClick={() => setRetry((r) => r + 1)}
-            className="p-2 rounded-lg bg-obsidian-card"
+            className="min-h-[38px] min-w-[38px] p-2 rounded-xl bg-obsidian-card hover:bg-obsidian-surface border border-white/[0.08] flex items-center justify-center text-on-surface-variant hover:text-bullion transition-colors"
+            title="بروزرسانی داده‌های نمودار"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-bullion" : ""}`} />
           </button>
         </div>
       </div>
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {RANGES.map((r) => (
+
+      {/* Timeframe Selector & Technical Overlays Row */}
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-white/[0.06]">
+        <div
+          className="flex items-center gap-1 overflow-x-auto max-w-full pb-1 sm:pb-0"
+          role="group"
+          aria-label="بازهٔ زمانی نمودار"
+        >
+          {RANGES.map((r) => (
+            <button
+              key={r.id}
+              aria-pressed={range === r.id}
+              onClick={() => setRange(r.id)}
+              className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap shrink-0 ${
+                range === r.id
+                  ? "gold-gradient-btn"
+                  : "bg-obsidian-card text-on-surface-variant hover:text-on-surface border border-white/[0.05]"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Technical Indicator Toggles */}
+        <div className="flex items-center gap-1.5 flex-wrap text-xs">
           <button
-            key={r.id}
-            aria-pressed={range === r.id}
-            onClick={() => setRange(r.id)}
-            className={`px-3 py-2 rounded-xl text-xs ${range === r.id ? "gold-gradient-btn" : "bg-obsidian-card text-on-surface-variant hover:text-on-surface"}`}
+            type="button"
+            aria-pressed={showSMA}
+            onClick={() => setShowSMA((v) => !v)}
+            className={`min-h-[34px] px-2.5 py-1 rounded-lg border text-[11px] flex items-center gap-1 transition-colors whitespace-nowrap shrink-0 ${
+              showSMA
+                ? "bg-sky-500/15 text-sky-300 border-sky-400/40 font-semibold"
+                : "bg-obsidian-card text-on-surface-variant border-white/[0.06]"
+            }`}
           >
-            {r.label}
+            <Activity className="w-3.5 h-3.5" />
+            <span>میانگین متحرک (SMA)</span>
           </button>
-        ))}
+          <button
+            type="button"
+            aria-pressed={showBands}
+            onClick={() => setShowBands((v) => !v)}
+            className={`min-h-[34px] px-2.5 py-1 rounded-lg border text-[11px] flex items-center gap-1 transition-colors whitespace-nowrap shrink-0 ${
+              showBands
+                ? "bg-purple-500/15 text-purple-300 border-purple-400/40 font-semibold"
+                : "bg-obsidian-card text-on-surface-variant border-white/[0.06]"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>کانال بولینگر</span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={showExtremes}
+            onClick={() => setShowExtremes((v) => !v)}
+            className={`min-h-[34px] px-2.5 py-1 rounded-lg border text-[11px] transition-colors whitespace-nowrap shrink-0 ${
+              showExtremes
+                ? "bg-bullion/15 text-bullion-light border-bullion/40 font-semibold"
+                : "bg-obsidian-card text-on-surface-variant border-white/[0.06]"
+            }`}
+          >
+            خطوط سقف/کف
+          </button>
+        </div>
       </div>
+
+      {/* Period Summary KPI Strip */}
+      {stats && points.length >= 2 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-3">
+            <span className="text-[11px] text-on-surface-variant block">
+              سقف بازه (High)
+            </span>
+            <span className="font-num text-sm sm:text-base font-bold text-gain-text mt-1 block" dir="ltr">
+              {displayPrice(stats.high)}
+            </span>
+            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block">
+              {date(stats.highAt, false)}
+            </span>
+          </div>
+          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-3">
+            <span className="text-[11px] text-on-surface-variant block">
+              کف بازه (Low)
+            </span>
+            <span className="font-num text-sm sm:text-base font-bold text-loss-text mt-1 block" dir="ltr">
+              {displayPrice(stats.low)}
+            </span>
+            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block">
+              {date(stats.lowAt, false)}
+            </span>
+          </div>
+          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-3">
+            <span className="text-[11px] text-on-surface-variant block">
+              میانگین بازه (Avg)
+            </span>
+            <span className="font-num text-sm sm:text-base font-bold text-bullion-light mt-1 block" dir="ltr">
+              {displayPrice(stats.average)}
+            </span>
+            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block">
+              شروع: {displayPrice(stats.open)}
+            </span>
+          </div>
+          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-3">
+            <span className="text-[11px] text-on-surface-variant block">
+              دامنهٔ نوسان بازه
+            </span>
+            <span className="font-num text-sm sm:text-base font-bold text-on-surface mt-1 block" dir="ltr">
+              {toPersianDigits(stats.volatilityPercent.toFixed(2))}٪
+            </span>
+            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block">
+              اختلاف: {displayPrice(stats.high - stats.low)}
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="min-h-72" aria-busy={loading}>
         {error ? (
           <div
@@ -177,7 +458,7 @@ export function PriceHistoryChart({
           >
             {error}
             <button
-              className="block mx-auto mt-4 underline"
+              className="block mx-auto mt-4 px-4 py-2 rounded-xl bg-loss/15 border border-loss/30 text-loss-text hover:bg-loss/25 transition-colors"
               onClick={() => setRetry((r) => r + 1)}
             >
               تلاش مجدد
@@ -194,20 +475,74 @@ export function PriceHistoryChart({
           </p>
         ) : (
           <>
+            {/* Active Sample Inspector Bar (Live Crosshair Readout) */}
             <div
-              className="flex flex-wrap items-center justify-between gap-2 text-xs mb-3 min-h-8"
+              className="bg-obsidian-950/85 border border-white/[0.07] rounded-xl px-3.5 py-2.5 mb-3 flex flex-wrap items-center justify-between gap-3 text-xs"
               aria-live="polite"
             >
-              <span className="font-num text-xl text-bullion">
-                {selected && displayPrice(selected.price)}
-              </span>
-              <span className="font-num text-on-surface-variant">
-                {selected && date(selected.at)}
-              </span>
+              <div className="flex flex-wrap items-baseline gap-2.5">
+                <span className="font-num text-xl sm:text-2xl font-black text-bullion">
+                  {selected && displayPrice(selected.price)}
+                </span>
+                <span className="text-[11px] text-on-surface-variant">
+                  {unitLabel}
+                </span>
+                {selected && (
+                  <span
+                    dir="ltr"
+                    className={`font-num text-xs font-semibold ${
+                      selectedDeltaPct > 0
+                        ? "text-gain-text"
+                        : selectedDeltaPct < 0
+                          ? "text-loss-text"
+                          : "text-on-surface-variant"
+                    }`}
+                  >
+                    ({formatPercent(selectedDeltaPct).text} در بازه
+                    {Math.abs(stepDeltaPct) >= 0.01
+                      ? ` • ${formatPercent(stepDeltaPct).text} گام`
+                      : ""}
+                    )
+                  </span>
+                )}
+              </div>
+
+              {selected && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-num text-on-surface-variant">
+                  <span>
+                    باز:{" "}
+                    <strong className="text-on-surface">
+                      {displayPrice(selected.open ?? selected.price)}
+                    </strong>
+                  </span>
+                  <span>
+                    سقف:{" "}
+                    <strong className="text-gain-text">
+                      {displayPrice(selected.high ?? selected.price)}
+                    </strong>
+                  </span>
+                  <span>
+                    کف:{" "}
+                    <strong className="text-loss-text">
+                      {displayPrice(selected.low ?? selected.price)}
+                    </strong>
+                  </span>
+                  {showSMA && indicators.sma[activeIdx] && (
+                    <span className="text-sky-300">
+                      SMA: <strong>{displayPrice(indicators.sma[activeIdx].value)}</strong>
+                    </span>
+                  )}
+                  <span className="text-bullion-light font-semibold">
+                    {date(selected.at, true)}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Interactive Technical SVG Canvas */}
             <svg
-              viewBox="0 0 800 310"
-              className="w-full h-auto touch-pan-y"
+              viewBox="0 0 800 325"
+              className="w-full h-auto touch-pan-y select-none"
               role="img"
               aria-label={`${title}، ${toPersianDigits(points.length)} نمونهٔ واقعی`}
               onPointerLeave={() => setHover(null)}
@@ -226,28 +561,53 @@ export function PriceHistoryChart({
             >
               <defs>
                 <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
-                  <stop stopColor="#f59e0b" stopOpacity=".22" />
-                  <stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+                  <stop
+                    offset="0%"
+                    stopColor={strokeColor}
+                    stopOpacity="0.28"
+                  />
+                  <stop
+                    offset="75%"
+                    stopColor={strokeColor}
+                    stopOpacity="0.05"
+                  />
+                  <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
                 </linearGradient>
               </defs>
+
+              {/* Plot Background Frame */}
+              <rect
+                x={plotLeft}
+                y={plotTop}
+                width={plotW}
+                height={plotH}
+                rx="6"
+                fill="#070d1f"
+                fillOpacity="0.65"
+                stroke="#1e293b"
+                strokeWidth="1"
+              />
+
+              {/* Horizontal Price Grid Lines & Y-Axis Labels */}
               {[0, 1, 2, 3, 4].map((i) => {
                 const v = max - ((max - min) * i) / 4;
+                const gy = y(v);
                 return (
-                  <g key={i}>
+                  <g key={`hgrid-${i}`}>
                     <line
-                      x1="92"
-                      x2="772"
-                      y1={y(v)}
-                      y2={y(v)}
-                      stroke="#263149"
+                      x1={plotLeft}
+                      x2={plotRight}
+                      y1={gy}
+                      y2={gy}
+                      stroke="#1e293b"
                       strokeDasharray="4 5"
                     />
                     <text
-                      x="80"
-                      y={y(v) + 4}
+                      x={plotLeft - 8}
+                      y={gy + 4}
                       textAnchor="end"
                       fill="#94a3b8"
-                      fontSize="16"
+                      fontSize="13"
                       className="font-num"
                       direction="ltr"
                     >
@@ -256,93 +616,325 @@ export function PriceHistoryChart({
                   </g>
                 );
               })}
+
+              {/* Vertical Time Grid Lines & X-Axis Intermediate Labels */}
+              {[0, 0.333, 0.667, 1].map((ratio, idx) => {
+                const gx = plotLeft + plotW * ratio;
+                const sampleIdx = Math.min(
+                  points.length - 1,
+                  Math.round((points.length - 1) * ratio),
+                );
+                const pt = points[sampleIdx];
+                return (
+                  <g key={`vgrid-${idx}`}>
+                    <line
+                      x1={gx}
+                      x2={gx}
+                      y1={plotTop}
+                      y2={plotBottom}
+                      stroke="#1e293b"
+                      strokeOpacity="0.6"
+                      strokeDasharray="3 5"
+                    />
+                    {pt && (
+                      <text
+                        x={gx}
+                        y="314"
+                        textAnchor={
+                          idx === 0 ? "start" : idx === 3 ? "end" : "middle"
+                        }
+                        fill="#94a3b8"
+                        fontSize="12"
+                        className="font-num"
+                      >
+                        {date(pt.at)}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+
+              {/* Bollinger Volatility Band */}
+              {showBands && bandPath && (
+                <>
+                  <path
+                    d={bandPath}
+                    fill="#a855f7"
+                    fillOpacity="0.1"
+                    stroke="none"
+                  />
+                  <path
+                    d={indicators.upper
+                      .map(
+                        (p, i) =>
+                          `${i ? "L" : "M"}${x(p.at).toFixed(1)},${y(p.value).toFixed(1)}`,
+                      )
+                      .join(" ")}
+                    fill="none"
+                    stroke="#c084fc"
+                    strokeWidth="1"
+                    strokeDasharray="3 3"
+                    strokeOpacity="0.65"
+                  />
+                  <path
+                    d={indicators.lower
+                      .map(
+                        (p, i) =>
+                          `${i ? "L" : "M"}${x(p.at).toFixed(1)},${y(p.value).toFixed(1)}`,
+                      )
+                      .join(" ")}
+                    fill="none"
+                    stroke="#c084fc"
+                    strokeWidth="1"
+                    strokeDasharray="3 3"
+                    strokeOpacity="0.65"
+                  />
+                </>
+              )}
+
+              {/* Period Average, High & Low Reference Lines */}
+              {showExtremes && stats && (
+                <>
+                  <line
+                    x1={plotLeft}
+                    x2={plotRight}
+                    y1={y(stats.average)}
+                    y2={y(stats.average)}
+                    stroke="#f59e0b"
+                    strokeOpacity="0.45"
+                    strokeDasharray="6 4"
+                  />
+                  {stats.high > stats.low && (
+                    <>
+                      <line
+                        x1={plotLeft}
+                        x2={plotRight}
+                        y1={y(stats.high)}
+                        y2={y(stats.high)}
+                        stroke="#34d399"
+                        strokeOpacity="0.3"
+                        strokeDasharray="2 4"
+                      />
+                      <line
+                        x1={plotLeft}
+                        x2={plotRight}
+                        y1={y(stats.low)}
+                        y2={y(stats.low)}
+                        stroke="#fb7185"
+                        strokeOpacity="0.3"
+                        strokeDasharray="2 4"
+                      />
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* Primary Price Series (Line / Candle / OHLC Bar) */}
               {kind === "line" ? (
                 <>
                   <path
-                    d={`${path} L${x(points.at(-1)!.at)},270 L92,270Z`}
+                    d={`${path} L${x(points.at(-1)!.at).toFixed(1)},${plotBottom} L${plotLeft},${plotBottom}Z`}
                     fill={`url(#${gradient})`}
                   />
                   <path
                     d={path}
                     fill="none"
-                    stroke="#fbbf24"
-                    strokeWidth="2"
+                    stroke={strokeColor}
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     vectorEffect="non-scaling-stroke"
                   />
                 </>
-              ) : (
+              ) : kind === "candle" ? (
                 points.map((p, i) => {
-                  const up = p.price >= (p.open ?? p.price),
+                  const openVal =
+                    p.open ?? (i > 0 ? points[i - 1].price : p.price);
+                  const up = p.price >= openVal,
                     color = up ? "#34d399" : "#fb7185",
-                    width = Math.max(1, Math.min(14, 500 / points.length));
+                    width = Math.max(2, Math.min(14, 480 / points.length));
+                  const highY = y(Math.max(p.high ?? p.price, openVal, p.price));
+                  const lowY = y(Math.min(p.low ?? p.price, openVal, p.price));
+                  const bodyTop = Math.min(y(openVal), y(p.price));
+                  const bodyH = Math.max(2, Math.abs(y(openVal) - y(p.price)));
                   return (
                     <g key={p.at}>
                       <line
                         x1={x(p.at)}
                         x2={x(p.at)}
-                        y1={y(p.high ?? p.price)}
-                        y2={y(p.low ?? p.price)}
+                        y1={highY}
+                        y2={lowY}
                         stroke={color}
+                        strokeWidth="1.2"
                       />
                       <rect
                         x={x(p.at) - width / 2}
-                        y={Math.min(y(p.open ?? p.price), y(p.price))}
+                        y={bodyTop}
                         width={width}
-                        height={Math.max(
-                          1,
-                          Math.abs(y(p.open ?? p.price) - y(p.price)),
-                        )}
+                        height={bodyH}
+                        rx="1"
                         fill={color}
                       />
                     </g>
                   );
                 })
+              ) : (
+                points.map((p, i) => {
+                  const openVal =
+                    p.open ?? (i > 0 ? points[i - 1].price : p.price);
+                  const up = p.price >= openVal,
+                    color = up ? "#34d399" : "#fb7185",
+                    tickW = Math.max(2, Math.min(7, 260 / points.length));
+                  const px = x(p.at);
+                  const highY = y(Math.max(p.high ?? p.price, openVal, p.price));
+                  const lowY = y(Math.min(p.low ?? p.price, openVal, p.price));
+                  return (
+                    <g key={p.at}>
+                      <line
+                        x1={px}
+                        x2={px}
+                        y1={highY}
+                        y2={lowY}
+                        stroke={color}
+                        strokeWidth="1.5"
+                      />
+                      <line
+                        x1={px - tickW}
+                        x2={px}
+                        y1={y(openVal)}
+                        y2={y(openVal)}
+                        stroke={color}
+                        strokeWidth="1.5"
+                      />
+                      <line
+                        x1={px}
+                        x2={px + tickW}
+                        y1={y(p.price)}
+                        y2={y(p.price)}
+                        stroke={color}
+                        strokeWidth="1.5"
+                      />
+                    </g>
+                  );
+                })
               )}
+
+              {/* SMA Moving Average Curve */}
+              {showSMA && smaPath && (
+                <path
+                  d={smaPath}
+                  fill="none"
+                  stroke="#38bdf8"
+                  strokeWidth="1.7"
+                  strokeDasharray="5 3"
+                  vectorEffect="non-scaling-stroke"
+                />
+              )}
+
+              {/* High & Low Extreme Pin Markers */}
+              {showExtremes && hi > lo && points[maxIdx] && points[minIdx] && (
+                <>
+                  <g>
+                    <circle
+                      cx={x(points[maxIdx].at)}
+                      cy={y(points[maxIdx].high ?? points[maxIdx].price)}
+                      r="4"
+                      fill="#10b981"
+                      stroke="#040814"
+                      strokeWidth="1.5"
+                    />
+                  </g>
+                  <g>
+                    <circle
+                      cx={x(points[minIdx].at)}
+                      cy={y(points[minIdx].low ?? points[minIdx].price)}
+                      r="4"
+                      fill="#f43f5e"
+                      stroke="#040814"
+                      strokeWidth="1.5"
+                    />
+                  </g>
+                </>
+              )}
+
+              {/* Bottom Sub-Panel: Step Momentum / Volatility Histogram */}
+              <line
+                x1={plotLeft}
+                x2={plotRight}
+                y1={histTop}
+                y2={histTop}
+                stroke="#1e293b"
+                strokeWidth="1"
+              />
+              {points.map((p, i) => {
+                const prev = i > 0 ? points[i - 1].price : p.open ?? p.price;
+                const delta = p.price - prev;
+                const barH = Math.max(
+                  2,
+                  (Math.abs(delta) / maxDelta) * (histBottom - histTop - 4),
+                );
+                const barW = Math.max(1.5, Math.min(10, 440 / points.length));
+                const up = delta >= 0;
+                return (
+                  <rect
+                    key={`hist-${p.at}`}
+                    x={x(p.at) - barW / 2}
+                    y={histBottom - barH}
+                    width={barW}
+                    height={barH}
+                    rx="1"
+                    fill={up ? "#34d399" : "#fb7185"}
+                    fillOpacity={activeIdx === i ? "0.95" : "0.4"}
+                  />
+                );
+              })}
+
+              {/* 2D Crosshair & Active Sample Highlight */}
               {selected && (
                 <>
                   <line
                     x1={x(selected.at)}
                     x2={x(selected.at)}
-                    y1="30"
-                    y2="270"
-                    stroke="#94a3b8"
-                    strokeDasharray="3 5"
+                    y1={plotTop}
+                    y2={histBottom}
+                    stroke="#fbbf24"
+                    strokeOpacity="0.7"
+                    strokeDasharray="3 4"
+                  />
+                  <line
+                    x1={plotLeft}
+                    x2={plotRight}
+                    y1={y(selected.price)}
+                    y2={y(selected.price)}
+                    stroke="#fbbf24"
+                    strokeOpacity="0.45"
+                    strokeDasharray="3 4"
+                  />
+                  <circle
+                    cx={x(selected.at)}
+                    cy={y(selected.price)}
+                    r="7"
+                    fill="#fbbf24"
+                    fillOpacity="0.22"
                   />
                   <circle
                     cx={x(selected.at)}
                     cy={y(selected.price)}
                     r="4"
                     fill="#fbbf24"
+                    stroke="#040814"
+                    strokeWidth="1.5"
                   />
                 </>
               )}
-              <text
-                x="92"
-                y="303"
-                textAnchor="start"
-                fill="#94a3b8"
-                fontSize="16"
-                className="font-num"
-              >
-                {date(points[0].at)}
-              </text>
-              <text
-                x="772"
-                y="303"
-                textAnchor="end"
-                fill="#94a3b8"
-                fontSize="16"
-                className="font-num"
-              >
-                {date(points.at(-1)!.at)}
-              </text>
             </svg>
+
             <label className="sr-only" htmlFor={`${gradient}-sample`}>
               بررسی نمونه‌های نمودار
             </label>
             <input
               id={`${gradient}-sample`}
-              className="w-full accent-amber-400"
+              className="w-full accent-amber-400 mt-1 cursor-pointer"
               dir="ltr"
               type="range"
               min="0"
@@ -350,15 +942,32 @@ export function PriceHistoryChart({
               value={hover ?? points.length - 1}
               onChange={(e) => setHover(Number(e.target.value))}
             />
-            <p className="text-[11px] text-on-surface-variant mt-2">
-              {toPersianDigits(points.length)} نمونه •{" "}
-              {data?.resolution === "daily"
-                ? "قیمت پایانی روزانه؛ شمع‌ها از باز، سقف و کف واقعی"
-                : "داده‌های داخل روز؛ شمع‌ها از تجمیع نمونه‌های واقعی"}
-              {hi === lo
-                ? " • منبع در این بازه تغییر قیمتی ثبت نکرده است."
-                : ""}
-            </p>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-on-surface-variant mt-2">
+              <p>
+                {toPersianDigits(points.length)} نمونه •{" "}
+                {data?.resolution === "daily"
+                  ? "قیمت پایانی روزانه؛ شمع‌ها از باز، سقف و کف واقعی"
+                  : "داده‌های داخل روز؛ شمع‌ها از تجمیع نمونه‌های واقعی"}
+                {hi === lo
+                  ? " • منبع در این بازه تغییر قیمتی ثبت نکرده است."
+                  : ""}
+              </p>
+              <div className="flex items-center gap-3">
+                {showSMA && (
+                  <span className="flex items-center gap-1 text-sky-300">
+                    <span className="w-2.5 h-0.5 bg-sky-400 inline-block" />
+                    میانگین متحرک
+                  </span>
+                )}
+                {showExtremes && (
+                  <span className="flex items-center gap-1 text-amber-300">
+                    <span className="w-2.5 h-0.5 bg-amber-400 inline-block" />
+                    خط میانگین بازه
+                  </span>
+                )}
+              </div>
+            </div>
           </>
         )}
       </div>

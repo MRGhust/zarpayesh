@@ -45,7 +45,15 @@ export async function command(message, raw) {
     ["browse", "charts", "addgroup"].includes(name)
   )
     return privatePanel(name);
-  if (["start", "help"].includes(name)) return { text: HELP };
+  if (["start", "help"].includes(name))
+    return {
+      text: HELP,
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "⚙️ بازگشت به تنظیمات", callback_data: "settings" }],
+        ],
+      },
+    };
   if (name === "assets")
     return {
       text: Object.entries(ASSETS)
@@ -56,8 +64,9 @@ export async function command(message, raw) {
     const asset = requiredAsset(a);
     if (b && b !== "chart") throw new UserError("نمونه: /price usd chart 24");
     const h = hours(c);
-    // Compare-and-set makes the group-wide ten-second limit atomic.
-    if (now - chat.lastRequest < 10000)
+    const cooldown = message.chat.type === "private" ? 1500 : 10000;
+    // Compare-and-set makes the per-chat rate limit atomic.
+    if (now - chat.lastRequest < cooldown)
       return { text: "برای درخواست بعدی چند ثانیه صبر کنید." };
     const claim = await db
       .update(chats)
@@ -129,7 +138,7 @@ export async function command(message, raw) {
   if (name === "chart") {
     const id = `${chat.id}:${requiredAsset(a)}`,
       chart = chartFlag(b),
-      h = hours(c);
+      explicitHours = c !== undefined ? hours(c) : null;
     const existing = await db
       .select()
       .from(subscriptions)
@@ -139,7 +148,7 @@ export async function command(message, raw) {
       throw new UserError("ابتدا با /schedule برای این نماد برنامه بسازید.");
     await db
       .update(subscriptions)
-      .set({ chart, hours: h })
+      .set({ chart, hours: explicitHours ?? existing.hours ?? 24 })
       .where(eq(subscriptions.id, id))
       .run();
     return settings(chat);
@@ -165,7 +174,7 @@ export async function command(message, raw) {
     }
   } else if (name === "alert") {
     const asset = requiredAsset(a),
-      threshold = Number((c || "").replace(/[,٬]/g, ""));
+      threshold = Number((c || "").replace(/[,٬،]/g, ""));
     if (
       !["above", "below"].includes(b) ||
       !Number.isFinite(threshold) ||
@@ -197,24 +206,31 @@ export async function command(message, raw) {
     };
   } else if (name === "alerts") {
     const all = await listAlerts(chat.id);
+    if (!all.length) return { text: "هشدار فعالی ندارید." };
     return {
-      text: all.length
-        ? all
-            .map(
-              (x) =>
-                `${x.asset}:${x.direction} — ${money(x.threshold, chat.unit, x.asset)}`,
-            )
-            .join("\n")
-        : "هشدار فعالی ندارید.",
+      text: all
+        .map(
+          (x) =>
+            `${x.asset}:${x.direction} — ${ASSETS[x.asset]} (${x.direction === "above" ? "سقف" : "کف"}) — ${money(x.threshold, chat.unit, x.asset)}`,
+        )
+        .join("\n"),
+      reply_markup: {
+        inline_keyboard: all.map((x) => [
+          {
+            text: `🗑 حذف ${ASSETS[x.asset]} (${x.direction === "above" ? "سقف" : "کف"})`,
+            callback_data: `unalert:${x.asset}:${x.direction}`,
+          },
+        ]),
+      },
     };
   } else if (name === "unalert") {
     const [asset, dir] = (a || "").split(":");
-    requiredAsset(asset);
+    const id = requiredAsset(asset);
     if (!["above", "below"].includes(dir))
       throw new UserError("نمونه: /unalert usd:above");
     await db
       .delete(alerts)
-      .where(eq(alerts.id, `${chat.id}:${asset}:${dir}`))
+      .where(eq(alerts.id, `${chat.id}:${id}:${dir}`))
       .run();
     return { text: "هشدار حذف شد." };
   } else return { text: "دستور شناخته نشد؛ /help را ببینید." };

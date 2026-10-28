@@ -25,6 +25,18 @@ export const metadata: Metadata = {
     "قیمت لیر",
   ],
   authors: [{ name: "ZarPayesh Financial Terminal" }],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "زرپایش",
+  },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     title: "زرپایش | قیمت لحظه‌ای دلار، طلا و سکه امامی",
     description:
@@ -66,6 +78,8 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="bg-obsidian font-sans text-on-surface antialiased selection:bg-bullion/20 selection:text-bullion-light">
         {children}

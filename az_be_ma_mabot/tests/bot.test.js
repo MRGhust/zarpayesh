@@ -320,3 +320,25 @@ test("invalid, future and out-of-window history cannot manufacture a chart", asy
   const data = await chartHistory(item, 24, now);
   assert.equal(data.points.length, 0);
 });
+test("disabling chart without hours preserves previously configured hours and direct Persian asset names work in private chat", async () => {
+  sdk.controls.admin = true;
+  await command(message, "/schedule usd 60 on 6");
+  await command(message, "/chart usd off");
+  assert.equal((await listSubs(-1001)).find((x) => x.asset === "usd").hours, 6);
+
+  await command(message, "/alert دلار above 100000");
+  assert.equal((await listAlerts(-1001)).length, 1);
+  await callback({
+    id: "q-unalert",
+    from: message.from,
+    message: { ...message, message_id: 2 },
+    data: "unalert:usd:above",
+  });
+  assert.equal((await listAlerts(-1001)).length, 0);
+
+  const privateMsg = { chat: { id: 99, type: "private" }, from: { id: 99 } };
+  response(1250000, "usd");
+  await messageHandler({ ...privateMsg, text: "دلار" });
+  assert.match(sdk.sent.at(-1).text, /دلار آمریکا/);
+});
+

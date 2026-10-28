@@ -27,24 +27,74 @@ export const ASSETS = {
 };
 export const ALIASES = {
   دلار: "usd",
+  "دلار آمریکا": "usd",
   یورو: "eur",
   درهم: "aed",
+  "درهم امارات": "aed",
   پوند: "gbp",
   لیر: "try",
+  "لیر ترکیه": "try",
+  کانادا: "cad",
+  "دلار کانادا": "cad",
+  فرانک: "chf",
+  "فرانک سوئیس": "chf",
+  یوان: "cny",
+  دینار: "iqd",
+  "دینار عراق": "iqd",
+  منات: "azn",
+  روبل: "rub",
+  گریونا: "uah",
   طلا: "geram18",
+  طلا۱۸: "geram18",
+  طلا18: "geram18",
+  "طلای ۱۸": "geram18",
+  "طلای ۱۸ عیار": "geram18",
+  طلا۲۴: "geram24",
+  طلا24: "geram24",
+  "طلای ۲۴": "geram24",
+  "طلای ۲۴ عیار": "geram24",
+  شمش: "geram24",
+  مثقال: "mesghal",
+  مظنه: "mesghal",
+  "مثقال طلا": "mesghal",
+  انس: "ons",
+  اونس: "ons",
+  "انس جهانی": "ons",
   سکه: "sekee",
+  امامی: "sekee",
+  "سکه امامی": "sekee",
+  بهار: "sekeb",
+  "بهار آزادی": "sekeb",
+  نیم: "nim",
+  "نیم سکه": "nim",
+  "نیم‌سکه": "nim",
+  ربع: "rob",
+  "ربع سکه": "rob",
+  "ربع‌سکه": "rob",
+  گرمی: "gerami",
+  "سکه گرمی": "gerami",
 };
-export function assetId(value = "") {
-  const id = ALIASES[value] || value.toLowerCase();
-  return Object.hasOwn(ASSETS, id) ? id : null;
-}
 export function digits(value) {
-  return String(value)
+  return String(value ?? "")
     .replace(/[۰-۹]/g, (c) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(c)))
     .replace(/[٠-٩]/g, (c) => String("٠١٢٣٤٥٦٧٨٩".indexOf(c)));
 }
+export function assetId(value = "") {
+  const clean = digits(value)
+    .replace(/ي/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/\u200c/g, " ")
+    .trim();
+  const compact = clean.replace(/\s+/g, "");
+  const id =
+    ALIASES[clean] ||
+    ALIASES[value?.trim?.() || ""] ||
+    ALIASES[compact] ||
+    clean.toLowerCase();
+  return Object.hasOwn(ASSETS, id) ? id : null;
+}
 export function clockMinute(text) {
-  const match = /^(\d{1,2}):(\d{2})$/.exec(digits(text));
+  const match = /^(\d{1,2}):(\d{2})$/.exec(digits(text).trim());
   if (!match || +match[1] > 23 || +match[2] > 59)
     throw new UserError("ساعت باید مانند 09:30 باشد.");
   return +match[1] * 60 + +match[2];

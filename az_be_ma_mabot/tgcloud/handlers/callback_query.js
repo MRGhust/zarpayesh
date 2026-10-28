@@ -1,4 +1,5 @@
 import { api } from "sdk";
+import { UserError } from "../lib/config.js";
 import { privatePanel } from "../lib/private.js";
 import { command } from "../lib/commands.js";
 import { isAdmin } from "../lib/access.js";
@@ -28,22 +29,30 @@ export default async function (query) {
           `/price ${asset}${action === "plot" ? ` chart ${hours}` : ""}`,
         );
       else return;
-    } catch {
-      result = { text: "دریافت اطلاعات ناموفق بود؛ کمی بعد دوباره تلاش کنید." };
+    } catch (error) {
+      result = {
+        text:
+          error instanceof UserError
+            ? error.message
+            : "دریافت اطلاعات ناموفق بود؛ کمی بعد دوباره تلاش کنید.",
+      };
     }
     if (result) await api.sendMessage({ chat_id: message.chat.id, ...result });
     return;
   }
   const chat = await getChat(message.chat.id),
-    [action, asset] = (query.data || "").split(":");
+    [action, asset, dir] = (query.data || "").split(":");
   let cmd;
-  if (["pause", "resume", "help"].includes(action)) cmd = `/${action}`;
+  if (["pause", "resume", "help", "settings"].includes(action))
+    cmd = `/${action}`;
   else if (action === "unit")
     cmd = `/unit ${chat.unit === "rial" ? "toman" : "rial"}`;
   else if (action === "silent") cmd = `/silent ${chat.silent ? "off" : "on"}`;
   else if (action === "hourly")
-    cmd = `/schedule ${asset} 60 ${asset === "usd" ? "on" : "off"} 24`;
+    cmd = `/schedule ${asset} 60 ${["usd", "geram18"].includes(asset) ? "on" : "off"} 24`;
   else if (action === "remove") cmd = `/unschedule ${asset}`;
+  else if (action === "unalert" && asset && dir)
+    cmd = `/unalert ${asset}:${dir}`;
   else if (action === "chart") {
     const sub = (await listSubs(chat.id)).find((x) => x.asset === asset);
     if (!sub) return;
@@ -52,15 +61,23 @@ export default async function (query) {
   let result;
   try {
     result = await command({ ...message, from: query.from }, cmd);
-  } catch {
+  } catch (error) {
     result = {
-      text: "خطایی در ذخیرهٔ تنظیمات رخ داد؛ /settings را دوباره باز کنید.",
+      text:
+        error instanceof UserError
+          ? error.message
+          : "خطایی در ذخیرهٔ تنظیمات رخ داد؛ /settings را دوباره باز کنید.",
     };
   }
-  if (result)
-    await api.editMessageText({
-      chat_id: message.chat.id,
-      message_id: message.message_id,
-      ...result,
-    });
+  if (result) {
+    try {
+      await api.editMessageText({
+        chat_id: message.chat.id,
+        message_id: message.message_id,
+        ...result,
+      });
+    } catch (error) {
+      if (!/not modified/i.test(error?.description || "")) throw error;
+    }
+  }
 }

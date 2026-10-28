@@ -2,7 +2,8 @@ import { fetch } from "sdk";
 import { SITE_URL } from "./config.js";
 import { history } from "./store.js";
 export async function chartHistory(item, hours, now) {
-  const range = hours <= 1 ? "1H" : hours <= 24 ? "1D" : "1W";
+  const range =
+    hours <= 1 ? "1H" : hours <= 24 ? "1D" : hours <= 168 ? "1W" : "1M";
   try {
     const response = await fetch(
       `${SITE_URL}/api/history?symbol=${encodeURIComponent(item.symbol)}&range=${range}`,
@@ -24,7 +25,17 @@ export async function chartHistory(item, hours, now) {
         Number.isFinite(p.price) &&
         p.price > 0
       )
-        unique.set(p.at, { at: p.at, price: p.price });
+        unique.set(p.at, {
+          at: p.at,
+          price: p.price,
+          ...(Number.isFinite(p.open) && p.open > 0 ? { open: p.open } : {}),
+          ...(Number.isFinite(p.high) && p.high >= p.price
+            ? { high: p.high }
+            : {}),
+          ...(Number.isFinite(p.low) && p.low > 0 && p.low <= p.price
+            ? { low: p.low }
+            : {}),
+        });
     const points = [...unique.values()].sort((a, b) => a.at - b.at);
     if (points.length >= 2)
       return {

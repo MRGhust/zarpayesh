@@ -5,6 +5,18 @@ export interface HistoryPoint {
   high?: number;
   low?: number;
 }
+export interface HistoryStats {
+  open: number;
+  close: number;
+  high: number;
+  low: number;
+  highAt: number;
+  lowAt: number;
+  average: number;
+  change: number;
+  changePercent: number;
+  volatilityPercent: number;
+}
 export const HISTORY_RANGES = {
   "1H": 1 / 24,
   "1D": 1,
@@ -27,6 +39,7 @@ export const HISTORY_SYMBOLS = new Set([
   "price_iqd",
   "price_azn",
   "price_rub",
+  "price_uah",
   "ons",
   "geram18",
   "geram24",
@@ -36,6 +49,7 @@ export const HISTORY_SYMBOLS = new Set([
   "nim",
   "rob",
   "gerami",
+  "parsian1g",
 ]);
 function number(value: unknown): number {
   return typeof value === "number"
@@ -130,4 +144,50 @@ export function aggregateHistory(
     });
   }
   return [...buckets.values()];
+}
+export function computeHistoryStats(
+  points: HistoryPoint[],
+): HistoryStats | null {
+  if (points.length < 2) return null;
+  const first = points[0];
+  const last = points[points.length - 1];
+  const open = first.open ?? first.price;
+  const close = last.price;
+  let high = -Infinity;
+  let low = Infinity;
+  let highAt = first.at;
+  let lowAt = first.at;
+  let sum = 0;
+
+  for (const p of points) {
+    const ph = p.high ?? p.price;
+    const pl = p.low ?? p.price;
+    if (ph >= high) {
+      high = ph;
+      highAt = p.at;
+    }
+    if (pl <= low) {
+      low = pl;
+      lowAt = p.at;
+    }
+    sum += p.price;
+  }
+
+  const average = sum / points.length;
+  const change = close - open;
+  const changePercent = open > 0 ? (change / open) * 100 : 0;
+  const volatilityPercent = low > 0 ? ((high - low) / low) * 100 : 0;
+
+  return {
+    open,
+    close,
+    high,
+    low,
+    highAt,
+    lowAt,
+    average,
+    change,
+    changePercent,
+    volatilityPercent,
+  };
 }
