@@ -20,6 +20,8 @@
     color-scheme: dark;
     direction: rtl;
     -webkit-tap-highlight-color: transparent;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   body {
@@ -42,7 +44,8 @@
       );
     color: #f8fafc;
     font-family: var(--font-vazirmatn), var(--font-jakarta), sans-serif;
-    overflow-x: hidden;
+    max-width: 100%;
+    overflow-x: clip;
     user-select: text;
     min-height: 100vh;
   }
@@ -55,6 +58,15 @@
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
   letter-spacing: -0.02em;
+}
+
+/* Hide scrollbars on horizontal pill strips */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom Scrollbars */
@@ -165,7 +177,7 @@
 
 /* Mobile Safe Bottom Padding */
 .pb-safe {
-  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
 }
 
 .font-num,
@@ -189,7 +201,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible {
   outline: 2px solid #fbbf24;
-  outline-offset: 4px;
+  outline-offset: 2px;
 }
 button:disabled {
   cursor: not-allowed;

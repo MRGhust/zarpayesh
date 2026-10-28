@@ -15,9 +15,27 @@ export function usePWAInstall() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Register service worker for offline PWA support
+    // Clean up any legacy v1/v2 page caches and register v3 service worker
+    if ("caches" in window) {
+      caches
+        .keys()
+        .then((keys) => {
+          for (const key of keys) {
+            if (key.includes("-pwa-v1") || key.includes("-pwa-v2")) {
+              void caches.delete(key);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          void reg.update();
+        })
+        .catch(() => {});
     }
 
     const isStandalone =
@@ -73,11 +91,12 @@ export function usePWAInstall() {
 }
 
 export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== "undefined" ? navigator.onLine : true,
-  );
+  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
+    if (typeof navigator !== "undefined") {
+      setIsOnline(navigator.onLine);
+    }
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 

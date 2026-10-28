@@ -1,8 +1,7 @@
-const CACHE_NAME = "zarpayesh-pwa-v2";
-const DATA_CACHE_NAME = "zarpayesh-api-v2";
+const CACHE_NAME = "zarpayesh-static-v3";
+const DATA_CACHE_NAME = "zarpayesh-api-v3";
 
-const PRECACHE_URLS = [
-  "/",
+const STATIC_ASSETS = [
   "/icon.svg",
   "/pwa-192x192.png",
   "/pwa-512x512.png",
@@ -11,11 +10,12 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener("install", (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting()),
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .catch(() => {}),
   );
 });
 
@@ -42,17 +42,31 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Never intercept Next.js build chunks, HMR, RSC payloads, or HTML navigation
+  if (
+    url.pathname.startsWith("/_next/") ||
+    request.mode === "navigate" ||
+    request.headers.get("RSC") === "1"
+  ) {
+    return;
+  }
 
   // Network-first with offline cache fallback for live API endpoints
-  if (url.pathname.startsWith("/api/market") || url.pathname.startsWith("/api/history")) {
+  if (
+    url.pathname.startsWith("/api/market") ||
+    url.pathname.startsWith("/api/history")
+  ) {
     event.respondWith(
       fetch(request)
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(DATA_CACHE_NAME).then((cache) => {
-              cache.put(request, clone);
-            });
+            caches
+              .open(DATA_CACHE_NAME)
+              .then((cache) => cache.put(request, clone))
+              .catch(() => {});
           }
           return response;
         })
@@ -60,7 +74,9 @@ self.addEventListener("fetch", (event) => {
           const cached = await caches.match(request);
           if (cached) return cached;
           return new Response(
-            JSON.stringify({ error: "حالت آفلاین؛ ارتباط با شبکه برقرار نیست." }),
+            JSON.stringify({
+              error: "حالت آفلاین؛ ارتباط با شبکه برقرار نیست.",
+            }),
             {
               status: 503,
               headers: { "Content-Type": "application/json" },
@@ -71,13 +87,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first for static fonts/icons, network-first for HTML navigation
-  if (
-    url.pathname.startsWith("/fonts/") ||
-    url.pathname.endsWith(".png") ||
-    url.pathname.endsWith(".svg") ||
-    url.pathname.endsWith(".wav")
-  ) {
+  // Cache-first only for immutable static fonts and icons
+  if (STATIC_ASSETS.includes(url.pathname)) {
     event.respondWith(
       caches.match(request).then(
         (cached) =>
@@ -85,27 +96,14 @@ self.addEventListener("fetch", (event) => {
           fetch(request).then((res) => {
             if (res.ok) {
               const clone = res.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(request, clone))
+                .catch(() => {});
             }
             return res;
           }),
       ),
-    );
-    return;
-  }
-
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then((res) => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return res;
-        })
-        .catch(async () => {
-          const cached = await caches.match(request);
-          return cached || caches.match("/");
-        }),
     );
   }
 });

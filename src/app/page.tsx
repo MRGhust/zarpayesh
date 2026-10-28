@@ -159,15 +159,15 @@ export default function HomePage() {
   ].filter((b) => b.item?.dataQuality === "live");
 
   return (
-    <div className="min-h-screen text-on-surface flex flex-col pb-safe md:pb-0">
-      <header className="sticky top-0 z-40">
+    <div className="min-h-screen w-full max-w-[100vw] overflow-x-clip text-on-surface flex flex-col pb-safe md:pb-0">
+      <header className="sticky top-0 z-40 w-full max-w-full">
         <div className="hidden sm:block">
           <MarqueeTicker items={all} unit={unit} />
         </div>
         <MasterHeader
           unit={unit}
           onToggleUnit={toggleUnit}
-          onOpenAlertModal={openAlert}
+          onOpenAlertModal={() => openAlert()}
           onSync={fetchRates}
           isSyncing={syncing}
           searchQuery={search}
@@ -197,16 +197,16 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
+      <main className="flex-1 min-w-0 max-w-7xl w-full mx-auto px-2.5 sm:px-6 py-3.5 sm:py-6">
         <div
           role="status"
-          className={`flex flex-wrap justify-between items-center gap-2 text-xs px-4 py-2.5 rounded-xl mb-5 border ${
+          className={`flex flex-wrap justify-between items-center gap-2 text-[11px] sm:text-xs px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl mb-4 sm:mb-5 border min-w-0 ${
             error
               ? "text-loss-text bg-loss-surface border-loss-border"
               : "text-on-surface-variant bg-obsidian-card/80 border-white/5"
           }`}
         >
-          <span>
+          <span className="min-w-0 break-words">
             {error ||
               `${status} • ${
                 data
@@ -221,7 +221,7 @@ export default function HomePage() {
               }`}
           </span>
           <a
-            className="text-bullion font-semibold hover:underline"
+            className="text-bullion font-semibold hover:underline whitespace-nowrap shrink-0"
             href="https://t.me/az_be_ma_mabot"
             target="_blank"
             rel="noreferrer"
@@ -234,7 +234,7 @@ export default function HomePage() {
         {benchmarks.length > 0 && !search.trim() && (
           <section
             aria-label="شاخص‌های کلیدی بازار"
-            className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 mb-6"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3.5 mb-5 sm:mb-6"
           >
             {benchmarks.map(({ item, tab }) => {
               if (!item) return null;
@@ -245,15 +245,15 @@ export default function HomePage() {
                   key={item.id}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className="text-right bg-obsidian-card/85 hover:bg-obsidian-surface border border-white/[0.07] hover:border-bullion/35 rounded-2xl p-3 sm:p-4 transition-all active:scale-[0.99]"
+                  className="min-w-0 text-right bg-obsidian-card/85 hover:bg-obsidian-surface border border-white/[0.07] hover:border-bullion/35 rounded-2xl p-2.5 sm:p-4 transition-all active:scale-[0.99]"
                 >
-                  <div className="flex items-center justify-between gap-1.5">
-                    <span className="text-xs font-bold text-on-surface truncate">
+                  <div className="flex items-center justify-between gap-1 min-w-0">
+                    <span className="text-[11px] sm:text-xs font-bold text-on-surface truncate">
                       {item.title}
                     </span>
                     <span
                       dir="ltr"
-                      className={`text-[11px] font-num font-bold shrink-0 ${
+                      className={`text-[10px] sm:text-[11px] font-num font-bold shrink-0 ${
                         pct.isPositive
                           ? "text-gain-text"
                           : pct.isNeutral
@@ -265,7 +265,7 @@ export default function HomePage() {
                     </span>
                   </div>
                   <p
-                    className="font-num text-lg sm:text-xl font-black text-bullion-light mt-2"
+                    className="font-num text-sm sm:text-xl font-black text-bullion-light mt-1.5 sm:mt-2 truncate"
                     dir="ltr"
                   >
                     {formatPrice(item.priceToman, unit, false, isOunce)}{" "}
@@ -282,14 +282,14 @@ export default function HomePage() {
         {notice && (
           <div
             role="alert"
-            className="glass-panel rounded-xl p-4 mb-5 flex justify-between items-center gap-3 text-sm border border-bullion/40"
+            className="glass-panel rounded-xl p-3.5 sm:p-4 mb-4 sm:mb-5 flex justify-between items-center gap-3 text-xs sm:text-sm border border-bullion/40 min-w-0"
           >
-            <span>{notice}</span>
+            <span className="min-w-0 break-words">{notice}</span>
             <button
               type="button"
               aria-label="بستن اعلان"
               onClick={() => setNotice("")}
-              className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg hover:bg-white/10"
+              className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white/10 shrink-0"
             >
               ×
             </button>
@@ -298,7 +298,7 @@ export default function HomePage() {
 
         {!data ? (
           <div
-            className="glass-panel p-16 rounded-2xl text-center text-on-surface-variant"
+            className="glass-panel p-10 sm:p-16 rounded-2xl text-center text-on-surface-variant text-sm"
             role="status"
           >
             {syncing ? (

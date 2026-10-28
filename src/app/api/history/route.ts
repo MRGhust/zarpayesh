@@ -9,6 +9,7 @@ import {
   aggregateHistory,
   computeHistoryStats,
 } from "@/lib/history";
+
 export async function GET(request: NextRequest) {
   const symbol =
     request.nextUrl.searchParams.get("symbol") || "price_dollar_rl";
@@ -18,6 +19,9 @@ export async function GET(request: NextRequest) {
       { error: "نماد یا بازه نامعتبر است." },
       { status: 400 },
     );
+
+  // Parsian 1g ingot tracks 18k gold on TGJU
+  const upstreamSymbol = symbol === "parsian1g" ? "geram18" : symbol;
   const days = HISTORY_RANGES[range as HistoryRange],
     intraday = days <= 1,
     now = Date.now();
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest) {
     if (intraday) {
       try {
         const response = await fetch(
-          `https://www.tgju.org/profile/${symbol}`,
+          `https://www.tgju.org/profile/${upstreamSymbol}`,
           {
             signal: AbortSignal.timeout(10000),
             next: { revalidate: 60 },
@@ -53,13 +57,16 @@ export async function GET(request: NextRequest) {
     if (intraday && filtered.length < 2 && parsed.length >= 2) {
       const latestAt = parsed[parsed.length - 1].at;
       filtered = parsed.filter((p) => p.at >= latestAt - days * 86400000);
+      if (filtered.length < 2) {
+        filtered = parsed.slice(-Math.min(parsed.length, 30));
+      }
     }
 
     // If intraday is unavailable or has fewer than 2 points, fall back to daily summary data
     if (!intraday || filtered.length < 2) {
       const fallbackDays = Math.max(days, 7);
       const response = await fetch(
-        `https://api.tgju.org/v1/market/indicator/summary-table-data/${symbol}?length=${Math.ceil(fallbackDays * 1.5) + 15}`,
+        `https://api.tgju.org/v1/market/indicator/summary-table-data/${upstreamSymbol}?length=${Math.ceil(fallbackDays * 1.5) + 20}`,
         {
           signal: AbortSignal.timeout(10000),
           next: { revalidate: 900 },
@@ -80,6 +87,9 @@ export async function GET(request: NextRequest) {
         dailyFiltered = dailyParsed.filter(
           (p) => p.at >= latestAt - fallbackDays * 86400000,
         );
+        if (dailyFiltered.length < 2) {
+          dailyFiltered = dailyParsed.slice(-Math.min(dailyParsed.length, 14));
+        }
       }
       filtered = dailyFiltered;
       resolution = "daily";

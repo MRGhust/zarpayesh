@@ -45,7 +45,7 @@ export function PriceAlertModal({
       current?.id === "ons" ? "دلار" : unit === "rial" ? "ریال" : "تومان";
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/75 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2.5 sm:p-3 bg-black/75 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -55,7 +55,7 @@ export function PriceAlertModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="alert-title"
-        className="w-full max-w-lg max-h-[90dvh] overflow-y-auto bg-surface-container-low border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl"
+        className="w-full max-w-lg max-h-[90dvh] overflow-y-auto bg-surface-container-low border border-white/10 rounded-3xl p-4 sm:p-6 shadow-2xl"
         onKeyDown={(e) => {
           if (e.key === "Escape") onClose();
           if (e.key === "Tab") {
@@ -82,6 +82,7 @@ export function PriceAlertModal({
           </h2>
           <button
             ref={close}
+            type="button"
             aria-label="بستن هشدار"
             onClick={onClose}
             className="p-2"
@@ -107,10 +108,15 @@ export function PriceAlertModal({
               return;
             }
             try {
+              const id =
+                typeof crypto !== "undefined" &&
+                typeof crypto.randomUUID === "function"
+                  ? crypto.randomUUID()
+                  : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
               const next = [
                 ...alerts,
                 {
-                  id: crypto.randomUUID(),
+                  id,
                   symbol,
                   threshold:
                     current.id === "ons" || unit === "rial"
@@ -203,8 +209,8 @@ export function PriceAlertModal({
                   key={alert.id}
                   className="flex justify-between items-center gap-3 py-3 border-b border-white/5 text-xs"
                 >
-                  <div>
-                    <p>
+                  <div className="min-w-0">
+                    <p className="truncate">
                       {item?.title || alert.symbol} •{" "}
                       {alert.triggered
                         ? "فعال شده"
@@ -212,7 +218,7 @@ export function PriceAlertModal({
                           ? "سقف"
                           : "کف"}
                     </p>
-                    <p className="font-num mt-1 text-on-surface-variant">
+                    <p className="font-num mt-1 text-on-surface-variant truncate">
                       {formatPrice(
                         item?.id === "ons"
                           ? alert.threshold
@@ -224,6 +230,7 @@ export function PriceAlertModal({
                     </p>
                   </div>
                   <button
+                    type="button"
                     aria-label={`حذف هشدار ${item?.title || alert.symbol}`}
                     onClick={() => {
                       try {

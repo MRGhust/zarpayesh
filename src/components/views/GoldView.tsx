@@ -71,23 +71,23 @@ export function GoldView({
     allGoldAndCoins.find((i) => i.symbol === selected)?.title || "طلای ۱۸ عیار";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap justify-between items-end gap-3">
-        <div>
-          <p className="text-bullion text-xs font-semibold mb-1.5">
+    <div className="w-full min-w-0 space-y-5 sm:space-y-6">
+      <div className="flex flex-wrap justify-between items-end gap-2 min-w-0">
+        <div className="min-w-0">
+          <p className="text-bullion text-xs font-semibold mb-1">
             طلا و مسکوکات
           </p>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-balance">
+          <h1 className="text-xl sm:text-3xl font-black tracking-tight text-balance">
             ارزش امروز، روند روزهای گذشته
           </h1>
-          <p className="text-xs text-on-surface-variant mt-2">
+          <p className="text-xs text-on-surface-variant mt-1.5">
             پایش عیارهای طلا، مظنه مثقال، انس جهانی و حباب‌سنج تحلیلی مسکوکات
           </p>
         </div>
       </div>
 
       {/* Gold Benchmarks Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4 w-full min-w-0">
         {goldItems.map((item) => {
           const pct = formatPercent(item.changePercent);
           const isOunce = item.id === "ons";
@@ -105,26 +105,26 @@ export function GoldView({
 
           return (
             <article
-              className={`glass-panel glass-panel-hover rounded-2xl p-5 flex flex-col justify-between transition-all ${
+              className={`glass-panel glass-panel-hover rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-w-0 transition-all ${
                 selected === item.symbol
                   ? "border-bullion/45 ring-1 ring-bullion/25"
                   : ""
               }`}
               key={item.id}
             >
-              <div>
-                <div className="flex justify-between items-start gap-2">
-                  <div>
-                    <h2 className="text-sm font-bold text-on-surface">
+              <div className="min-w-0">
+                <div className="flex justify-between items-start gap-2 min-w-0">
+                  <div className="min-w-0">
+                    <h2 className="text-sm font-bold text-on-surface truncate">
                       {item.title}
                     </h2>
-                    <p className="text-[11px] text-on-surface-variant mt-0.5 font-num">
+                    <p className="text-[11px] text-on-surface-variant mt-0.5 font-num truncate">
                       {item.titleEn}
                     </p>
                   </div>
                   <span
                     dir="ltr"
-                    className={`text-xs font-num font-bold px-2 py-1 rounded-lg ${
+                    className={`text-xs font-num font-bold px-2 py-1 rounded-lg shrink-0 ${
                       pct.isPositive
                         ? "text-gain-text bg-gain/15"
                         : pct.isNeutral
@@ -136,19 +136,22 @@ export function GoldView({
                   </span>
                 </div>
 
-                <p className="font-num text-2xl sm:text-3xl mt-4 font-black text-bullion-light" dir="ltr">
+                <p
+                  className="font-num text-2xl sm:text-3xl mt-3.5 font-black text-bullion-light truncate"
+                  dir="ltr"
+                >
                   {formatPrice(item.priceToman, unit, false, isOunce)}{" "}
                   <span className="text-xs font-medium text-on-surface-variant">
                     {isOunce ? "دلار" : unit === "rial" ? "ریال" : "تومان"}
                   </span>
                 </p>
 
-                <div className="mt-4 pt-3 border-t border-white/10">
-                  <div className="flex justify-between text-[11px] text-on-surface-variant font-num mb-1.5">
-                    <span>
+                <div className="mt-3.5 pt-3 border-t border-white/10">
+                  <div className="flex justify-between gap-2 text-[11px] text-on-surface-variant font-num mb-1.5 min-w-0">
+                    <span className="truncate">
                       کف: {formatPrice(item.lowToman, unit, false, isOunce)}
                     </span>
-                    <span>
+                    <span className="truncate">
                       سقف: {formatPrice(item.highToman, unit, false, isOunce)}
                     </span>
                   </div>
@@ -164,28 +167,28 @@ export function GoldView({
                 </div>
               </div>
 
-              <div className="flex justify-between items-center mt-4 pt-3 border-t border-white/5 text-xs">
+              <div className="flex justify-between items-center gap-1.5 mt-3.5 pt-3 border-t border-white/5 text-xs">
                 <button
                   type="button"
                   onClick={() => onSelectConverter(item.symbol)}
-                  className="min-h-[38px] px-2 rounded-lg text-on-surface-variant hover:text-bullion flex items-center gap-1"
+                  className="h-9 px-2 rounded-lg text-on-surface-variant hover:text-bullion flex items-center gap-1 whitespace-nowrap"
                 >
-                  <ArrowLeftRight className="w-3.5 h-3.5" />
+                  <ArrowLeftRight className="w-3.5 h-3.5 shrink-0" />
                   تبدیل
                 </button>
                 <button
                   type="button"
-                  className="min-h-[38px] px-2.5 rounded-lg text-bullion font-semibold flex items-center gap-1 hover:bg-bullion/10 transition-colors"
+                  className="h-9 px-2.5 rounded-lg text-bullion font-semibold flex items-center gap-1 hover:bg-bullion/10 transition-colors whitespace-nowrap"
                   onClick={() => handleSelectChart(item.symbol)}
                 >
-                  <ChartNoAxesCombined className="w-3.5 h-3.5" />
+                  <ChartNoAxesCombined className="w-3.5 h-3.5 shrink-0" />
                   نمودار واقعی
                 </button>
                 <button
                   type="button"
                   aria-label={`هشدار قیمت ${item.title}`}
                   onClick={() => onOpenAlertModal(item.symbol)}
-                  className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-lg text-on-surface-variant hover:text-bullion"
+                  className="h-9 w-9 flex items-center justify-center rounded-lg text-on-surface-variant hover:text-bullion shrink-0"
                 >
                   <Bell className="w-3.5 h-3.5" />
                 </button>
@@ -199,12 +202,12 @@ export function GoldView({
       <PriceHistoryChart symbol={selected} title={chartTitle} unit={unit} />
 
       {/* Gold Invoice & Making Fee Calculator */}
-      <section className="glass-panel rounded-2xl p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-          <div>
-            <h2 className="font-bold text-base sm:text-lg flex items-center gap-2">
-              <Calculator className="w-5 h-5 text-bullion" />
-              برآورد فاکتور طلا
+      <section className="glass-panel rounded-2xl p-4 sm:p-6 w-full min-w-0">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4 min-w-0">
+          <div className="min-w-0">
+            <h2 className="font-bold text-sm sm:text-lg flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-bullion shrink-0" />
+              <span>برآورد فاکتور طلا</span>
             </h2>
             <p className="text-xs text-on-surface-variant leading-6 mt-1">
               وزن و درصدهای درج‌شده در فاکتور فروشنده را وارد کنید. نرخ مالیات و
@@ -213,7 +216,7 @@ export function GoldView({
           </div>
 
           {/* Quick Presets */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
             <button
               type="button"
               onClick={() =>
@@ -224,7 +227,7 @@ export function GoldView({
                   tax: "0",
                 }))
               }
-              className="min-h-[34px] px-2.5 py-1 rounded-xl text-[11px] bg-obsidian-card hover:bg-obsidian-surface border border-white/[0.08] text-on-surface-variant hover:text-on-surface transition-colors"
+              className="h-8 px-2.5 rounded-xl text-[11px] bg-obsidian-card hover:bg-obsidian-surface border border-white/[0.08] text-on-surface-variant hover:text-on-surface transition-colors"
             >
               طلای خام / بدون اجرت
             </button>
@@ -238,10 +241,10 @@ export function GoldView({
                   tax: "10",
                 }))
               }
-              className="min-h-[34px] px-2.5 py-1 rounded-xl text-[11px] bg-bullion/15 hover:bg-bullion/25 border border-bullion/30 text-bullion-light font-medium flex items-center gap-1 transition-colors"
+              className="h-8 px-2.5 rounded-xl text-[11px] bg-bullion/15 hover:bg-bullion/25 border border-bullion/30 text-bullion-light font-medium flex items-center gap-1 transition-colors"
             >
-              <Sparkles className="w-3 h-3" />
-              اجرت ۷٪ + سود ۷٪ + مالیات ۱۰٪
+              <Sparkles className="w-3 h-3 shrink-0" />
+              <span>اجرت ۷٪ + سود ۷٪ + مالیات ۱۰٪</span>
             </button>
             <button
               type="button"
@@ -253,14 +256,14 @@ export function GoldView({
                   tax: "10",
                 }))
               }
-              className="min-h-[34px] px-2.5 py-1 rounded-xl text-[11px] bg-obsidian-card hover:bg-obsidian-surface border border-white/[0.08] text-on-surface-variant hover:text-on-surface transition-colors"
+              className="h-8 px-2.5 rounded-xl text-[11px] bg-obsidian-card hover:bg-obsidian-surface border border-white/[0.08] text-on-surface-variant hover:text-on-surface transition-colors"
             >
               مدل پرکار (اجرت ۱۵٪)
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
           {(
             [
               ["weight", "وزن (گرم)"],
@@ -269,8 +272,8 @@ export function GoldView({
               ["tax", "مالیات بر اجرت و سود (درصد)"],
             ] as const
           ).map(([key, label]) => (
-            <label className="flex flex-col gap-1 text-xs" key={key}>
-              {label}
+            <label className="flex flex-col gap-1 text-xs min-w-0" key={key}>
+              <span className="truncate">{label}</span>
               <input
                 aria-label={label}
                 inputMode="decimal"
@@ -278,7 +281,7 @@ export function GoldView({
                 onChange={(e) =>
                   setFields((f) => ({ ...f, [key]: e.target.value }))
                 }
-                className="w-full mt-1.5 bg-obsidian-card rounded-xl border border-white/10 p-3 font-num text-sm focus:border-bullion focus:outline-none"
+                className="w-full mt-1 bg-obsidian-card rounded-xl border border-white/10 p-2.5 sm:p-3 font-num text-sm focus:border-bullion focus:outline-none"
                 dir="ltr"
               />
             </label>
@@ -287,43 +290,51 @@ export function GoldView({
 
         {/* Itemized Invoice Breakdown */}
         {valid && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-5 pt-4 border-t border-white/[0.06] text-xs">
-            <div className="bg-obsidian-950/60 rounded-xl p-3 border border-white/[0.05]">
-              <span className="text-on-surface-variant block">ارزش طلای خام</span>
-              <span className="font-num font-bold text-on-surface mt-1 block">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mt-4 pt-4 border-t border-white/[0.06] text-xs">
+            <div className="bg-obsidian-950/60 rounded-xl p-2.5 sm:p-3 border border-white/[0.05] min-w-0">
+              <span className="text-on-surface-variant block truncate">
+                ارزش طلای خام
+              </span>
+              <span className="font-num font-bold text-on-surface mt-1 block truncate">
                 {formatPrice(raw, unit, true)}
               </span>
             </div>
-            <div className="bg-obsidian-950/60 rounded-xl p-3 border border-white/[0.05]">
-              <span className="text-on-surface-variant block">مبلغ اجرت ساخت</span>
-              <span className="font-num font-bold text-on-surface mt-1 block">
+            <div className="bg-obsidian-950/60 rounded-xl p-2.5 sm:p-3 border border-white/[0.05] min-w-0">
+              <span className="text-on-surface-variant block truncate">
+                مبلغ اجرت ساخت
+              </span>
+              <span className="font-num font-bold text-on-surface mt-1 block truncate">
                 {formatPrice(fee, unit, true)}
               </span>
             </div>
-            <div className="bg-obsidian-950/60 rounded-xl p-3 border border-white/[0.05]">
-              <span className="text-on-surface-variant block">سود فروشنده</span>
-              <span className="font-num font-bold text-on-surface mt-1 block">
+            <div className="bg-obsidian-950/60 rounded-xl p-2.5 sm:p-3 border border-white/[0.05] min-w-0">
+              <span className="text-on-surface-variant block truncate">
+                سود فروشنده
+              </span>
+              <span className="font-num font-bold text-on-surface mt-1 block truncate">
                 {formatPrice(seller, unit, true)}
               </span>
             </div>
-            <div className="bg-obsidian-950/60 rounded-xl p-3 border border-white/[0.05]">
-              <span className="text-on-surface-variant block">مالیات بر اجرت و سود</span>
-              <span className="font-num font-bold text-on-surface mt-1 block">
+            <div className="bg-obsidian-950/60 rounded-xl p-2.5 sm:p-3 border border-white/[0.05] min-w-0">
+              <span className="text-on-surface-variant block truncate">
+                مالیات بر اجرت و سود
+              </span>
+              <span className="font-num font-bold text-on-surface mt-1 block truncate">
                 {formatPrice(vat, unit, true)}
               </span>
             </div>
           </div>
         )}
 
-        <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap justify-between items-center gap-3">
-          <div className="flex flex-col">
+        <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap justify-between items-center gap-3 min-w-0">
+          <div className="flex flex-col min-w-0">
             <span className="text-sm font-bold">جمع برآوردی</span>
             <p className="w-full text-xs text-on-surface-variant mt-1">
               شامل ارزش طلای ۱۸ عیار، اجرت، سود و مالیات
             </p>
           </div>
           <output
-            className="font-num text-2xl sm:text-3xl font-black text-bullion"
+            className="font-num text-xl sm:text-3xl font-black text-bullion break-all sm:break-words"
             aria-live="polite"
           >
             {valid ? formatPrice(total, unit, true) : "ورودی یا نرخ معتبر نیست"}
@@ -332,10 +343,10 @@ export function GoldView({
       </section>
 
       {/* Coins & Analytical Bubble Meter */}
-      <section className="glass-panel rounded-2xl p-5 sm:p-6">
-        <div className="flex flex-wrap justify-between items-end gap-2 mb-5">
-          <div>
-            <h2 className="font-bold text-base sm:text-lg">
+      <section className="glass-panel rounded-2xl p-4 sm:p-6 w-full min-w-0">
+        <div className="flex flex-wrap justify-between items-end gap-2 mb-4 min-w-0">
+          <div className="min-w-0">
+            <h2 className="font-bold text-sm sm:text-lg">
               قیمت سکه‌ها و حباب‌سنج تحلیلی
             </h2>
             <p className="text-xs text-on-surface-variant mt-1">
@@ -344,7 +355,7 @@ export function GoldView({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4 w-full min-w-0">
           {coinItems.map((item) => {
             const pct = formatPercent(item.changePercent);
             const hasLiveBubble =
@@ -358,18 +369,18 @@ export function GoldView({
             return (
               <article
                 key={item.id}
-                className={`bg-obsidian-card/90 border border-white/[0.07] rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all ${
+                className={`bg-obsidian-card/90 border border-white/[0.07] rounded-2xl p-4 sm:p-5 flex flex-col justify-between min-w-0 transition-all ${
                   selected === item.symbol ? "ring-1 ring-bullion/40" : ""
                 }`}
               >
-                <div>
-                  <div className="flex justify-between items-start gap-2">
-                    <div>
-                      <h3 className="text-sm font-bold text-on-surface">
+                <div className="min-w-0">
+                  <div className="flex justify-between items-start gap-2 min-w-0">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-on-surface truncate">
                         {item.title}
                       </h3>
                       {item.weightGrams && (
-                        <p className="text-[11px] text-on-surface-variant font-num mt-0.5">
+                        <p className="text-[11px] text-on-surface-variant font-num mt-0.5 truncate">
                           وزن: {toPersianDigits(item.weightGrams)} گرم · عیار{" "}
                           {toPersianDigits(item.karat || 21.6)}
                         </p>
@@ -377,7 +388,7 @@ export function GoldView({
                     </div>
                     <span
                       dir="ltr"
-                      className={`text-xs font-num font-bold px-2 py-1 rounded-lg ${
+                      className={`text-xs font-num font-bold px-2 py-1 rounded-lg shrink-0 ${
                         pct.isPositive
                           ? "text-gain-text bg-gain/15"
                           : pct.isNeutral
@@ -389,23 +400,27 @@ export function GoldView({
                     </span>
                   </div>
 
-                  <p className="font-num text-2xl font-black text-bullion-light my-4">
+                  <p className="font-num text-xl sm:text-2xl font-black text-bullion-light my-3.5 truncate">
                     {formatPrice(item.priceToman, unit, true)}
                   </p>
 
                   {/* Analytical Bubble Breakdown */}
-                  <div className="bg-obsidian-950/75 rounded-xl p-3 border border-white/[0.05] space-y-2 text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-on-surface-variant">ارزش ذاتی طلا:</span>
-                      <span className="font-num font-semibold text-on-surface">
+                  <div className="bg-obsidian-950/75 rounded-xl p-3 border border-white/[0.05] space-y-2 text-xs min-w-0">
+                    <div className="flex justify-between items-center gap-2 min-w-0">
+                      <span className="text-on-surface-variant shrink-0">
+                        ارزش ذاتی طلا:
+                      </span>
+                      <span className="font-num font-semibold text-on-surface truncate">
                         {hasLiveBubble && item.intrinsicValueToman
                           ? formatPrice(item.intrinsicValueToman, unit, true)
                           : "ناموجود"}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-on-surface-variant">حباب برآوردی:</span>
-                      <span className="font-num font-bold text-loss-text">
+                    <div className="flex justify-between items-center gap-2 min-w-0">
+                      <span className="text-on-surface-variant shrink-0">
+                        حباب برآوردی:
+                      </span>
+                      <span className="font-num font-bold text-loss-text truncate">
                         {hasLiveBubble
                           ? `${formatPrice(item.bubbleToman ?? 0, unit, true)} (${toPersianDigits(bubblePct.toFixed(1))}٪)`
                           : "ناموجود"}
@@ -436,29 +451,29 @@ export function GoldView({
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center gap-2 mt-4 pt-3 border-t border-white/5 text-xs">
+                <div className="flex justify-between items-center gap-1.5 mt-3.5 pt-3 border-t border-white/5 text-xs">
                   <button
                     type="button"
                     onClick={() => onSelectConverter(item.symbol)}
-                    className="min-h-[38px] px-2.5 rounded-lg text-on-surface-variant hover:text-bullion flex items-center gap-1"
+                    className="h-9 px-2 rounded-lg text-on-surface-variant hover:text-bullion flex items-center gap-1 whitespace-nowrap"
                   >
-                    <ArrowLeftRight className="w-3.5 h-3.5" />
+                    <ArrowLeftRight className="w-3.5 h-3.5 shrink-0" />
                     تبدیل
                   </button>
                   <button
                     type="button"
                     onClick={() => onOpenAlertModal(item.symbol)}
-                    className="min-h-[38px] px-2.5 rounded-lg text-on-surface-variant hover:text-bullion flex items-center gap-1"
+                    className="h-9 px-2 rounded-lg text-on-surface-variant hover:text-bullion flex items-center gap-1 whitespace-nowrap"
                   >
-                    <Bell className="w-3.5 h-3.5" />
+                    <Bell className="w-3.5 h-3.5 shrink-0" />
                     هشدار
                   </button>
                   <button
                     type="button"
-                    className="min-h-[38px] px-2.5 rounded-lg text-bullion font-semibold flex items-center gap-1 hover:bg-bullion/10"
+                    className="h-9 px-2 rounded-lg text-bullion font-semibold flex items-center gap-1 hover:bg-bullion/10 whitespace-nowrap"
                     onClick={() => handleSelectChart(item.symbol)}
                   >
-                    <ChartNoAxesCombined className="w-3.5 h-3.5" />
+                    <ChartNoAxesCombined className="w-3.5 h-3.5 shrink-0" />
                     نمودار
                   </button>
                 </div>

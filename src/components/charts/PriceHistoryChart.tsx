@@ -143,16 +143,18 @@ export function PriceHistoryChart({
 
   const lo = values.length ? Math.min(...values) : 0,
     hi = values.length ? Math.max(...values) : 1;
-  const pad = (hi - lo) * 0.1 || Math.max(hi * 0.0001, 1),
+  const pad = (hi - lo) * 0.12 || Math.max(hi * 0.0001, 1),
     min = lo - pad,
     max = hi + pad;
 
-  const plotLeft = 104,
-    plotRight = 780,
-    plotTop = 26,
-    plotBottom = 248,
-    histTop = 258,
-    histBottom = 288;
+  const svgWidth = 640,
+    svgHeight = 310,
+    plotLeft = 12,
+    plotRight = 628,
+    plotTop = 20,
+    plotBottom = 234,
+    histTop = 244,
+    histBottom = 276;
   const plotW = plotRight - plotLeft;
   const plotH = plotBottom - plotTop;
 
@@ -175,7 +177,9 @@ export function PriceHistoryChart({
       timeZone: "Asia/Tehran",
       month: "short",
       day: "numeric",
-      ...(showTime ? { hour: "2-digit" as const, minute: "2-digit" as const } : {}),
+      ...(showTime
+        ? { hour: "2-digit" as const, minute: "2-digit" as const }
+        : {}),
     });
 
   const activeIdx = hover ?? points.length - 1;
@@ -193,7 +197,9 @@ export function PriceHistoryChart({
       : 0;
 
   const path = points
-    .map((p, i) => `${i ? "L" : "M"}${x(p.at).toFixed(1)},${y(p.price).toFixed(1)}`)
+    .map(
+      (p, i) => `${i ? "L" : "M"}${x(p.at).toFixed(1)},${y(p.price).toFixed(1)}`,
+    )
     .join(" ");
 
   const smaPath = indicators.sma
@@ -222,9 +228,15 @@ export function PriceHistoryChart({
       loI = 0,
       mDelta = 0.0001;
     for (let i = 0; i < points.length; i++) {
-      if ((points[i].high ?? points[i].price) >= (points[hiI].high ?? points[hiI].price))
+      if (
+        (points[i].high ?? points[i].price) >=
+        (points[hiI].high ?? points[hiI].price)
+      )
         hiI = i;
-      if ((points[i].low ?? points[i].price) <= (points[loI].low ?? points[loI].price))
+      if (
+        (points[i].low ?? points[i].price) <=
+        (points[loI].low ?? points[loI].price)
+      )
         loI = i;
       if (i > 0) {
         const d = Math.abs(points[i].price - points[i - 1].price);
@@ -240,25 +252,25 @@ export function PriceHistoryChart({
   return (
     <section
       id="market-chart-section"
-      className="glass-panel rounded-2xl p-4 sm:p-6 min-w-0 border border-white/[0.08]"
+      className="glass-panel rounded-2xl p-3.5 sm:p-6 w-full max-w-full min-w-0 overflow-hidden border border-white/[0.08]"
       aria-label={`نمودار تاریخی ${title}`}
     >
       {/* Top Header & Controls */}
-      <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
-        <div>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h2 className="font-bold text-base sm:text-lg flex items-center gap-2 text-on-surface">
+      <div className="flex flex-wrap justify-between items-start gap-3 mb-3.5 min-w-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-bold text-sm sm:text-lg flex items-center gap-1.5 text-on-surface">
               {isPositivePeriod ? (
-                <TrendingUp className="w-5 h-5 text-bullion shrink-0" />
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-bullion shrink-0" />
               ) : (
-                <TrendingDown className="w-5 h-5 text-loss-text shrink-0" />
+                <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-loss-text shrink-0" />
               )}
-              <span>نمودار تکنیکال {title}</span>
+              <span className="truncate">نمودار تکنیکال {title}</span>
             </h2>
             {stats && (
               <span
                 dir="ltr"
-                className={`font-num text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                className={`font-num text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-lg border shrink-0 ${
                   stats.changePercent > 0
                     ? "bg-gain/15 text-gain-text border-gain/30"
                     : stats.changePercent < 0
@@ -270,83 +282,90 @@ export function PriceHistoryChart({
               </span>
             )}
           </div>
-          <p className="text-xs text-on-surface-variant mt-1.5">
+          <p className="text-[11px] sm:text-xs text-on-surface-variant mt-1">
             تاریخچهٔ واقعی TGJU • افق زمانی تهران • واحد نمایش: {unitLabel}
           </p>
         </div>
 
-        {/* Chart Type & Indicator Controls */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        {/* Chart Type & Refresh Controls */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <div
-            className="flex items-center p-1 bg-obsidian-950/90 rounded-xl border border-white/[0.07]"
+            className="flex items-center p-0.5 sm:p-1 bg-obsidian-950/90 rounded-xl border border-white/[0.07]"
             role="group"
             aria-label="نوع نمودار"
           >
             <button
+              type="button"
               aria-label="نمودار خطی"
               aria-pressed={kind === "line"}
               onClick={() => setKind("line")}
-              className={`min-h-[36px] px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
+              className={`h-8 sm:h-9 px-2.5 rounded-lg text-xs flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
                 kind === "line"
                   ? "gold-gradient-btn"
                   : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
-              <LineChart className="w-4 h-4" />
+              <LineChart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">خطی</span>
             </button>
             <button
+              type="button"
               aria-label="نمودار شمعی"
               aria-pressed={kind === "candle"}
               onClick={() => setKind("candle")}
-              className={`min-h-[36px] px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
+              className={`h-8 sm:h-9 px-2.5 rounded-lg text-xs flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
                 kind === "candle"
                   ? "gold-gradient-btn"
                   : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
-              <ChartCandlestick className="w-4 h-4" />
+              <ChartCandlestick className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">شمعی</span>
             </button>
             <button
+              type="button"
               aria-label="نمودار میله‌ای OHLC"
               aria-pressed={kind === "bar"}
               onClick={() => setKind("bar")}
-              className={`min-h-[36px] px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
+              className={`h-8 sm:h-9 px-2.5 rounded-lg text-xs flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
                 kind === "bar"
                   ? "gold-gradient-btn"
                   : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
-              <BarChart3 className="w-4 h-4" />
+              <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">میله‌ای</span>
             </button>
           </div>
 
           <button
+            type="button"
             aria-label="تازه‌سازی نمودار"
             onClick={() => setRetry((r) => r + 1)}
-            className="min-h-[38px] min-w-[38px] p-2 rounded-xl bg-obsidian-card hover:bg-obsidian-surface border border-white/[0.08] flex items-center justify-center text-on-surface-variant hover:text-bullion transition-colors"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-obsidian-card hover:bg-obsidian-surface border border-white/[0.08] flex items-center justify-center text-on-surface-variant hover:text-bullion transition-colors shrink-0"
             title="بروزرسانی داده‌های نمودار"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-bullion" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${loading ? "animate-spin text-bullion" : ""}`}
+            />
           </button>
         </div>
       </div>
 
       {/* Timeframe Selector & Technical Overlays Row */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-white/[0.06]">
+      <div className="space-y-2.5 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:justify-between gap-2 mb-3.5 pb-3 border-b border-white/[0.06] min-w-0">
         <div
-          className="flex items-center gap-1 overflow-x-auto max-w-full pb-1 sm:pb-0"
+          className="grid grid-cols-4 sm:flex sm:flex-wrap items-center gap-1.5 w-full sm:w-auto min-w-0"
           role="group"
           aria-label="بازهٔ زمانی نمودار"
         >
           {RANGES.map((r) => (
             <button
               key={r.id}
+              type="button"
               aria-pressed={range === r.id}
               onClick={() => setRange(r.id)}
-              className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap shrink-0 ${
+              className={`h-8 sm:h-9 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-medium transition-all whitespace-nowrap flex items-center justify-center ${
                 range === r.id
                   ? "gold-gradient-btn"
                   : "bg-obsidian-card text-on-surface-variant hover:text-on-surface border border-white/[0.05]"
@@ -358,38 +377,38 @@ export function PriceHistoryChart({
         </div>
 
         {/* Technical Indicator Toggles */}
-        <div className="flex items-center gap-1.5 flex-wrap text-xs">
+        <div className="flex items-center gap-1.5 flex-wrap text-xs min-w-0">
           <button
             type="button"
             aria-pressed={showSMA}
             onClick={() => setShowSMA((v) => !v)}
-            className={`min-h-[34px] px-2.5 py-1 rounded-lg border text-[11px] flex items-center gap-1 transition-colors whitespace-nowrap shrink-0 ${
+            className={`h-8 px-2.5 rounded-lg border text-[11px] flex items-center gap-1 transition-colors whitespace-nowrap ${
               showSMA
                 ? "bg-sky-500/15 text-sky-300 border-sky-400/40 font-semibold"
                 : "bg-obsidian-card text-on-surface-variant border-white/[0.06]"
             }`}
           >
-            <Activity className="w-3.5 h-3.5" />
+            <Activity className="w-3.5 h-3.5 shrink-0" />
             <span>میانگین متحرک (SMA)</span>
           </button>
           <button
             type="button"
             aria-pressed={showBands}
             onClick={() => setShowBands((v) => !v)}
-            className={`min-h-[34px] px-2.5 py-1 rounded-lg border text-[11px] flex items-center gap-1 transition-colors whitespace-nowrap shrink-0 ${
+            className={`h-8 px-2.5 rounded-lg border text-[11px] flex items-center gap-1 transition-colors whitespace-nowrap ${
               showBands
                 ? "bg-purple-500/15 text-purple-300 border-purple-400/40 font-semibold"
                 : "bg-obsidian-card text-on-surface-variant border-white/[0.06]"
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
+            <Layers className="w-3.5 h-3.5 shrink-0" />
             <span>کانال بولینگر</span>
           </button>
           <button
             type="button"
             aria-pressed={showExtremes}
             onClick={() => setShowExtremes((v) => !v)}
-            className={`min-h-[34px] px-2.5 py-1 rounded-lg border text-[11px] transition-colors whitespace-nowrap shrink-0 ${
+            className={`h-8 px-2.5 rounded-lg border text-[11px] transition-colors whitespace-nowrap ${
               showExtremes
                 ? "bg-bullion/15 text-bullion-light border-bullion/40 font-semibold"
                 : "bg-obsidian-card text-on-surface-variant border-white/[0.06]"
@@ -402,62 +421,75 @@ export function PriceHistoryChart({
 
       {/* Period Summary KPI Strip */}
       {stats && points.length >= 2 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-3">
-            <span className="text-[11px] text-on-surface-variant block">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mb-3.5">
+          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-2.5 sm:p-3 min-w-0">
+            <span className="text-[10px] sm:text-[11px] text-on-surface-variant block truncate">
               سقف بازه (High)
             </span>
-            <span className="font-num text-sm sm:text-base font-bold text-gain-text mt-1 block" dir="ltr">
+            <span
+              className="font-num text-xs sm:text-base font-bold text-gain-text mt-1 block truncate"
+              dir="ltr"
+            >
               {displayPrice(stats.high)}
             </span>
-            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block">
+            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block truncate">
               {date(stats.highAt, false)}
             </span>
           </div>
-          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-3">
-            <span className="text-[11px] text-on-surface-variant block">
+          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-2.5 sm:p-3 min-w-0">
+            <span className="text-[10px] sm:text-[11px] text-on-surface-variant block truncate">
               کف بازه (Low)
             </span>
-            <span className="font-num text-sm sm:text-base font-bold text-loss-text mt-1 block" dir="ltr">
+            <span
+              className="font-num text-xs sm:text-base font-bold text-loss-text mt-1 block truncate"
+              dir="ltr"
+            >
               {displayPrice(stats.low)}
             </span>
-            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block">
+            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block truncate">
               {date(stats.lowAt, false)}
             </span>
           </div>
-          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-3">
-            <span className="text-[11px] text-on-surface-variant block">
+          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-2.5 sm:p-3 min-w-0">
+            <span className="text-[10px] sm:text-[11px] text-on-surface-variant block truncate">
               میانگین بازه (Avg)
             </span>
-            <span className="font-num text-sm sm:text-base font-bold text-bullion-light mt-1 block" dir="ltr">
+            <span
+              className="font-num text-xs sm:text-base font-bold text-bullion-light mt-1 block truncate"
+              dir="ltr"
+            >
               {displayPrice(stats.average)}
             </span>
-            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block">
+            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block truncate">
               شروع: {displayPrice(stats.open)}
             </span>
           </div>
-          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-3">
-            <span className="text-[11px] text-on-surface-variant block">
+          <div className="bg-obsidian-950/70 border border-white/[0.06] rounded-xl p-2.5 sm:p-3 min-w-0">
+            <span className="text-[10px] sm:text-[11px] text-on-surface-variant block truncate">
               دامنهٔ نوسان بازه
             </span>
-            <span className="font-num text-sm sm:text-base font-bold text-on-surface mt-1 block" dir="ltr">
+            <span
+              className="font-num text-xs sm:text-base font-bold text-on-surface mt-1 block truncate"
+              dir="ltr"
+            >
               {toPersianDigits(stats.volatilityPercent.toFixed(2))}٪
             </span>
-            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block">
+            <span className="text-[10px] text-on-surface-variant font-num mt-0.5 block truncate">
               اختلاف: {displayPrice(stats.high - stats.low)}
             </span>
           </div>
         </div>
       )}
 
-      <div className="min-h-72" aria-busy={loading}>
+      <div className="min-w-0" aria-busy={loading}>
         {error ? (
           <div
             role="status"
-            className="py-20 text-center text-sm text-loss-text"
+            className="py-14 text-center text-sm text-loss-text"
           >
             {error}
             <button
+              type="button"
               className="block mx-auto mt-4 px-4 py-2 rounded-xl bg-loss/15 border border-loss/30 text-loss-text hover:bg-loss/25 transition-colors"
               onClick={() => setRetry((r) => r + 1)}
             >
@@ -467,7 +499,7 @@ export function PriceHistoryChart({
         ) : points.length < 2 ? (
           <p
             role="status"
-            className="py-20 text-center text-sm text-on-surface-variant"
+            className="py-14 text-center text-sm text-on-surface-variant"
           >
             {loading
               ? "در حال دریافت تاریخچه…"
@@ -477,11 +509,11 @@ export function PriceHistoryChart({
           <>
             {/* Active Sample Inspector Bar (Live Crosshair Readout) */}
             <div
-              className="bg-obsidian-950/85 border border-white/[0.07] rounded-xl px-3.5 py-2.5 mb-3 flex flex-wrap items-center justify-between gap-3 text-xs"
+              className="bg-obsidian-950/85 border border-white/[0.07] rounded-xl px-3 py-2.5 mb-3 flex flex-wrap items-center justify-between gap-2 text-xs min-w-0"
               aria-live="polite"
             >
-              <div className="flex flex-wrap items-baseline gap-2.5">
-                <span className="font-num text-xl sm:text-2xl font-black text-bullion">
+              <div className="flex flex-wrap items-baseline gap-2 min-w-0">
+                <span className="font-num text-lg sm:text-2xl font-black text-bullion">
                   {selected && displayPrice(selected.price)}
                 </span>
                 <span className="text-[11px] text-on-surface-variant">
@@ -490,7 +522,7 @@ export function PriceHistoryChart({
                 {selected && (
                   <span
                     dir="ltr"
-                    className={`font-num text-xs font-semibold ${
+                    className={`font-num text-[11px] sm:text-xs font-semibold ${
                       selectedDeltaPct > 0
                         ? "text-gain-text"
                         : selectedDeltaPct < 0
@@ -508,7 +540,7 @@ export function PriceHistoryChart({
               </div>
 
               {selected && (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-num text-on-surface-variant">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-num text-on-surface-variant min-w-0">
                   <span>
                     باز:{" "}
                     <strong className="text-on-surface">
@@ -529,7 +561,10 @@ export function PriceHistoryChart({
                   </span>
                   {showSMA && indicators.sma[activeIdx] && (
                     <span className="text-sky-300">
-                      SMA: <strong>{displayPrice(indicators.sma[activeIdx].value)}</strong>
+                      SMA:{" "}
+                      <strong>
+                        {displayPrice(indicators.sma[activeIdx].value)}
+                      </strong>
                     </span>
                   )}
                   <span className="text-bullion-light font-semibold">
@@ -541,14 +576,15 @@ export function PriceHistoryChart({
 
             {/* Interactive Technical SVG Canvas */}
             <svg
-              viewBox="0 0 800 325"
-              className="w-full h-auto touch-pan-y select-none"
+              viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+              className="w-full h-auto block touch-pan-y select-none"
               role="img"
               aria-label={`${title}، ${toPersianDigits(points.length)} نمونهٔ واقعی`}
               onPointerLeave={() => setHover(null)}
               onPointerMove={(event) => {
                 const rect = event.currentTarget.getBoundingClientRect();
-                const target = ((event.clientX - rect.left) / rect.width) * 800;
+                const target =
+                  ((event.clientX - rect.left) / rect.width) * svgWidth;
                 let closest = 0;
                 for (let i = 1; i < points.length; i++)
                   if (
@@ -581,39 +617,27 @@ export function PriceHistoryChart({
                 y={plotTop}
                 width={plotW}
                 height={plotH}
-                rx="6"
+                rx="8"
                 fill="#070d1f"
-                fillOpacity="0.65"
+                fillOpacity="0.72"
                 stroke="#1e293b"
                 strokeWidth="1"
               />
 
-              {/* Horizontal Price Grid Lines & Y-Axis Labels */}
+              {/* Horizontal Price Grid Lines */}
               {[0, 1, 2, 3, 4].map((i) => {
                 const v = max - ((max - min) * i) / 4;
                 const gy = y(v);
                 return (
-                  <g key={`hgrid-${i}`}>
-                    <line
-                      x1={plotLeft}
-                      x2={plotRight}
-                      y1={gy}
-                      y2={gy}
-                      stroke="#1e293b"
-                      strokeDasharray="4 5"
-                    />
-                    <text
-                      x={plotLeft - 8}
-                      y={gy + 4}
-                      textAnchor="end"
-                      fill="#94a3b8"
-                      fontSize="13"
-                      className="font-num"
-                      direction="ltr"
-                    >
-                      {displayPrice(v)}
-                    </text>
-                  </g>
+                  <line
+                    key={`hgrid-${i}`}
+                    x1={plotLeft}
+                    x2={plotRight}
+                    y1={gy}
+                    y2={gy}
+                    stroke="#1e293b"
+                    strokeDasharray="4 5"
+                  />
                 );
               })}
 
@@ -638,13 +662,19 @@ export function PriceHistoryChart({
                     />
                     {pt && (
                       <text
-                        x={gx}
-                        y="314"
+                        x={
+                          idx === 0
+                            ? gx + 4
+                            : idx === 3
+                              ? gx - 4
+                              : gx
+                        }
+                        y="300"
                         textAnchor={
                           idx === 0 ? "start" : idx === 3 ? "end" : "middle"
                         }
                         fill="#94a3b8"
-                        fontSize="12"
+                        fontSize="13"
                         className="font-num"
                       >
                         {date(pt.at)}
@@ -752,7 +782,7 @@ export function PriceHistoryChart({
                     p.open ?? (i > 0 ? points[i - 1].price : p.price);
                   const up = p.price >= openVal,
                     color = up ? "#34d399" : "#fb7185",
-                    width = Math.max(2, Math.min(14, 480 / points.length));
+                    width = Math.max(2, Math.min(13, 420 / points.length));
                   const highY = y(Math.max(p.high ?? p.price, openVal, p.price));
                   const lowY = y(Math.min(p.low ?? p.price, openVal, p.price));
                   const bodyTop = Math.min(y(openVal), y(p.price));
@@ -784,7 +814,7 @@ export function PriceHistoryChart({
                     p.open ?? (i > 0 ? points[i - 1].price : p.price);
                   const up = p.price >= openVal,
                     color = up ? "#34d399" : "#fb7185",
-                    tickW = Math.max(2, Math.min(7, 260 / points.length));
+                    tickW = Math.max(2, Math.min(7, 230 / points.length));
                   const px = x(p.at);
                   const highY = y(Math.max(p.high ?? p.price, openVal, p.price));
                   const lowY = y(Math.min(p.low ?? p.price, openVal, p.price));
@@ -834,28 +864,47 @@ export function PriceHistoryChart({
               {/* High & Low Extreme Pin Markers */}
               {showExtremes && hi > lo && points[maxIdx] && points[minIdx] && (
                 <>
-                  <g>
-                    <circle
-                      cx={x(points[maxIdx].at)}
-                      cy={y(points[maxIdx].high ?? points[maxIdx].price)}
-                      r="4"
-                      fill="#10b981"
-                      stroke="#040814"
-                      strokeWidth="1.5"
-                    />
-                  </g>
-                  <g>
-                    <circle
-                      cx={x(points[minIdx].at)}
-                      cy={y(points[minIdx].low ?? points[minIdx].price)}
-                      r="4"
-                      fill="#f43f5e"
-                      stroke="#040814"
-                      strokeWidth="1.5"
-                    />
-                  </g>
+                  <circle
+                    cx={x(points[maxIdx].at)}
+                    cy={y(points[maxIdx].high ?? points[maxIdx].price)}
+                    r="4"
+                    fill="#10b981"
+                    stroke="#040814"
+                    strokeWidth="1.5"
+                  />
+                  <circle
+                    cx={x(points[minIdx].at)}
+                    cy={y(points[minIdx].low ?? points[minIdx].price)}
+                    r="4"
+                    fill="#f43f5e"
+                    stroke="#040814"
+                    strokeWidth="1.5"
+                  />
                 </>
               )}
+
+              {/* In-Plot Crisp Y-Axis Price Labels (Prevents Left Margin Waste on Mobile) */}
+              {[0, 1, 2, 3, 4].map((i) => {
+                const v = max - ((max - min) * i) / 4;
+                const gy = y(v);
+                return (
+                  <text
+                    key={`ylabel-${i}`}
+                    x={plotLeft + 6}
+                    y={i === 0 ? gy + 13 : gy - 5}
+                    textAnchor="start"
+                    fill="#cbd5e1"
+                    fontSize="12.5"
+                    stroke="#040814"
+                    strokeWidth="3"
+                    paintOrder="stroke"
+                    className="font-num font-semibold"
+                    direction="ltr"
+                  >
+                    {displayPrice(v)}
+                  </text>
+                );
+              })}
 
               {/* Bottom Sub-Panel: Step Momentum / Volatility Histogram */}
               <line
@@ -873,7 +922,7 @@ export function PriceHistoryChart({
                   2,
                   (Math.abs(delta) / maxDelta) * (histBottom - histTop - 4),
                 );
-                const barW = Math.max(1.5, Math.min(10, 440 / points.length));
+                const barW = Math.max(1.5, Math.min(9, 380 / points.length));
                 const up = delta >= 0;
                 return (
                   <rect
@@ -943,8 +992,8 @@ export function PriceHistoryChart({
               onChange={(e) => setHover(Number(e.target.value))}
             />
 
-            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-on-surface-variant mt-2">
-              <p>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-on-surface-variant mt-2 min-w-0">
+              <p className="min-w-0 break-words">
                 {toPersianDigits(points.length)} نمونه •{" "}
                 {data?.resolution === "daily"
                   ? "قیمت پایانی روزانه؛ شمع‌ها از باز، سقف و کف واقعی"
@@ -953,7 +1002,7 @@ export function PriceHistoryChart({
                   ? " • منبع در این بازه تغییر قیمتی ثبت نکرده است."
                   : ""}
               </p>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 shrink-0">
                 {showSMA && (
                   <span className="flex items-center gap-1 text-sky-300">
                     <span className="w-2.5 h-0.5 bg-sky-400 inline-block" />

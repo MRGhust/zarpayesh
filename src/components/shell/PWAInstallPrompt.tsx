@@ -1,6 +1,13 @@
 "use client";
 import React, { useState } from "react";
-import { Download, Smartphone, Share, PlusSquare, X, WifiOff } from "lucide-react";
+import {
+  Download,
+  Smartphone,
+  Share,
+  PlusSquare,
+  X,
+  WifiOff,
+} from "lucide-react";
 import { usePWAInstall, useOnlineStatus } from "@/hooks/usePWAInstall";
 
 export const PWAInstallButton: React.FC = () => {
@@ -22,10 +29,11 @@ export const PWAInstallButton: React.FC = () => {
             setShowGuide(true);
           }
         }}
-        className="min-h-[40px] px-2.5 sm:px-3 py-1.5 rounded-xl bg-bullion/15 hover:bg-bullion/25 text-bullion-light border border-bullion/35 text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 whitespace-nowrap shrink-0"
+        aria-label="نصب وب‌اپ زرپایش"
+        className="h-8 w-8 sm:h-10 sm:w-auto sm:px-3 rounded-xl bg-bullion/15 hover:bg-bullion/25 text-bullion-light border border-bullion/35 text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 whitespace-nowrap shrink-0"
         title="نصب اپلیکیشن زرپایش (PWA)"
       >
-        <Download className="w-4 h-4 shrink-0" />
+        <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
         <span className="hidden lg:inline">نصب وب‌اپ</span>
       </button>
 
@@ -42,13 +50,16 @@ export const PWAInstallButton: React.FC = () => {
             aria-labelledby="pwa-guide-title"
             className="w-full max-w-md bg-obsidian-card border border-white/10 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-bullion/15 border border-bullion/30 flex items-center justify-center text-bullion">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-bullion/15 border border-bullion/30 flex items-center justify-center text-bullion shrink-0">
                   <Smartphone className="w-5 h-5" />
                 </div>
-                <div>
-                  <h3 id="pwa-guide-title" className="font-bold text-sm sm:text-base text-on-surface">
+                <div className="min-w-0">
+                  <h3
+                    id="pwa-guide-title"
+                    className="font-bold text-sm sm:text-base text-on-surface truncate"
+                  >
                     نصب وب‌اپلیکیشن زرپایش (PWA)
                   </h3>
                   <p className="text-[11px] text-on-surface-variant mt-0.5">
@@ -60,7 +71,7 @@ export const PWAInstallButton: React.FC = () => {
                 type="button"
                 aria-label="بستن راهنمای نصب"
                 onClick={() => setShowGuide(false)}
-                className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl text-on-surface-variant hover:text-on-surface"
+                className="h-9 w-9 flex items-center justify-center rounded-xl text-on-surface-variant hover:text-on-surface shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -132,10 +143,12 @@ export const OfflineIndicator: React.FC = () => {
   return (
     <div
       role="status"
-      className="fixed bottom-20 md:bottom-4 left-4 z-50 flex items-center gap-2 rounded-xl bg-amber-500/95 text-obsidian-950 px-3.5 py-2 text-xs font-bold shadow-xl backdrop-blur-md"
+      className="fixed bottom-20 md:bottom-4 inset-x-3 sm:inset-x-auto sm:left-4 z-50 flex items-center justify-center sm:justify-start gap-2 rounded-xl bg-amber-500/95 text-obsidian-950 px-3.5 py-2 text-xs font-bold shadow-xl backdrop-blur-md"
     >
       <WifiOff className="w-4 h-4 shrink-0" />
-      <span>حالت آفلاین — نمایش آخرین داده‌های ذخیره‌شده</span>
+      <span className="truncate">
+        حالت آفلاین — نمایش آخرین داده‌های ذخیره‌شده
+      </span>
     </div>
   );
 };

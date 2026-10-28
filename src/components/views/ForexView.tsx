@@ -80,27 +80,29 @@ export function ForexView({
   const chartItem = items.find((item) => item.symbol === selected) || items[0];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-5 sm:space-y-6">
       {/* Header & Summary */}
-      <div className="flex flex-wrap justify-between items-end gap-3">
-        <div>
-          <p className="text-bullion text-xs font-semibold mb-1.5">بازار ارز و اسکناس</p>
-          <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-balance">
+      <div className="flex flex-wrap justify-between items-end gap-2 min-w-0">
+        <div className="min-w-0">
+          <p className="text-bullion text-xs font-semibold mb-1">
+            بازار ارز و اسکناس
+          </p>
+          <h1 className="font-black text-xl sm:text-3xl tracking-tight text-balance">
             قیمت‌ها، روشن و قابل پیگیری
           </h1>
-          <p className="text-xs text-on-surface-variant mt-2">
+          <p className="text-xs text-on-surface-variant mt-1.5">
             نرخ بازار آزاد از TGJU · نمایش دارایی‌های دارای دادهٔ زنده و تأییدشده
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-on-surface-variant font-num">
+        <div className="flex items-center gap-2 text-xs text-on-surface-variant font-num shrink-0">
           <span>{filtered.length.toLocaleString("fa-IR")} دارایی فعال</span>
         </div>
       </div>
 
       {/* Filter Bar & Mobile View Mode Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="space-y-2.5 lg:space-y-0 lg:flex lg:items-center lg:justify-between gap-3 w-full min-w-0">
         <div
-          className="flex gap-1.5 overflow-x-auto max-w-full pb-1 sm:pb-0"
+          className="flex flex-wrap gap-1.5 w-full lg:w-auto min-w-0"
           role="group"
           aria-label="فیلتر منطقه"
         >
@@ -117,7 +119,7 @@ export function ForexView({
               type="button"
               onClick={() => setRegion(id)}
               aria-pressed={region === id}
-              className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap shrink-0 ${
+              className={`h-9 px-3 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
                 region === id
                   ? "gold-gradient-btn"
                   : "glass-panel text-on-surface-variant hover:text-on-surface"
@@ -129,13 +131,13 @@ export function ForexView({
         </div>
 
         {/* Sort & Layout Mode Switcher */}
-        <div className="flex items-center gap-2 ms-auto">
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full lg:w-auto min-w-0">
           <div
-            className="flex items-center p-1 bg-obsidian-card rounded-xl border border-white/[0.08]"
+            className="flex items-center p-1 bg-obsidian-card rounded-xl border border-white/[0.08] min-w-0"
             role="group"
             aria-label="مرتب‌سازی"
           >
-            <ArrowUpDown className="w-3.5 h-3.5 text-on-surface-variant mx-1.5 hidden sm:inline" />
+            <ArrowUpDown className="w-3.5 h-3.5 text-on-surface-variant mx-1.5 hidden sm:inline shrink-0" />
             {(
               [
                 ["default", "پیش‌فرض"],
@@ -148,7 +150,7 @@ export function ForexView({
                 type="button"
                 onClick={() => setSortBy(id)}
                 aria-pressed={sortBy === id}
-                className={`min-h-[34px] px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap shrink-0 ${
+                className={`h-8 px-2.5 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap ${
                   sortBy === id
                     ? "bg-bullion/20 text-bullion-light font-bold"
                     : "text-on-surface-variant hover:text-on-surface"
@@ -160,7 +162,7 @@ export function ForexView({
           </div>
 
           <div
-            className="flex items-center p-1 bg-obsidian-card rounded-xl border border-white/[0.08]"
+            className="flex items-center p-1 bg-obsidian-card rounded-xl border border-white/[0.08] shrink-0"
             role="group"
             aria-label="حالت نمایش"
           >
@@ -169,7 +171,7 @@ export function ForexView({
               aria-label="نمایش کارتی"
               aria-pressed={viewMode === "grid"}
               onClick={() => setViewMode("grid")}
-              className={`min-h-[34px] min-w-[34px] p-1.5 rounded-lg flex items-center justify-center transition-colors ${
+              className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
                 viewMode === "grid"
                   ? "bg-bullion text-on-primary"
                   : "text-on-surface-variant hover:text-on-surface"
@@ -182,7 +184,7 @@ export function ForexView({
               aria-label="نمایش فشرده موبایل"
               aria-pressed={viewMode === "compact"}
               onClick={() => setViewMode("compact")}
-              className={`min-h-[34px] min-w-[34px] p-1.5 rounded-lg flex items-center justify-center transition-colors ${
+              className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
                 viewMode === "compact"
                   ? "bg-bullion text-on-primary"
                   : "text-on-surface-variant hover:text-on-surface"
@@ -204,7 +206,7 @@ export function ForexView({
           ارزی با این مشخصات پیدا نشد.
         </div>
       ) : viewMode === "compact" ? (
-        <div className="glass-panel rounded-2xl divide-y divide-white/[0.06] overflow-hidden">
+        <div className="glass-panel rounded-2xl divide-y divide-white/[0.06] overflow-hidden w-full min-w-0">
           {filtered.map((item) => {
             const percent = formatPercent(item.changePercent);
             const isOunce = item.id === "ons";
@@ -213,16 +215,16 @@ export function ForexView({
             return (
               <div
                 key={item.id}
-                className={`p-3.5 sm:px-5 flex items-center justify-between gap-3 transition-colors ${
+                className={`p-3 sm:px-5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 transition-colors min-w-0 ${
                   isSelected ? "bg-bullion/10" : "hover:bg-white/[0.02]"
                 }`}
               >
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                   <button
                     type="button"
                     aria-label={`افزودن ${item.title} به منتخب‌ها`}
                     onClick={() => handleToggleFav(item.symbol)}
-                    className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl text-on-surface-variant hover:text-bullion shrink-0"
+                    className="h-8 w-8 flex items-center justify-center rounded-xl text-on-surface-variant hover:text-bullion shrink-0"
                   >
                     <Star
                       className={`w-4 h-4 ${
@@ -231,20 +233,22 @@ export function ForexView({
                     />
                   </button>
                   <div className="min-w-0">
-                    <h2 className="font-bold text-sm truncate">{item.title}</h2>
+                    <h2 className="font-bold text-sm text-on-surface truncate">
+                      {item.title}
+                    </h2>
                     <p className="text-[11px] text-on-surface-variant font-num mt-0.5">
-                      {item.id.toUpperCase()} · ساعت {item.updatedAt}
+                      {item.id.toUpperCase()} · {item.updatedAt}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+                <div className="flex items-center gap-2.5 sm:gap-4 ms-auto shrink-0">
                   <div className="text-left" dir="ltr">
-                    <p className="font-num text-base sm:text-lg font-black text-bullion-light">
+                    <p className="font-num text-sm sm:text-lg font-black text-bullion-light">
                       {formatPrice(item.priceToman, unit, false, isOunce)}
                     </p>
                     <span
-                      className={`font-num text-[11px] font-semibold ${
+                      className={`font-num text-[11px] font-semibold block ${
                         percent.isNeutral
                           ? "text-on-surface-variant"
                           : percent.isPositive
@@ -261,7 +265,7 @@ export function ForexView({
                       type="button"
                       onClick={() => handleSelectChart(item.symbol)}
                       aria-label={`نمودار ${item.title}`}
-                      className="min-h-[40px] min-w-[40px] p-2 rounded-xl bg-obsidian-card border border-white/[0.06] text-bullion flex items-center justify-center"
+                      className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-obsidian-card border border-white/[0.06] text-bullion flex items-center justify-center"
                       title="مشاهده نمودار"
                     >
                       <ChartNoAxesCombined className="w-4 h-4" />
@@ -270,7 +274,7 @@ export function ForexView({
                       type="button"
                       onClick={() => onSelectConverter(item.symbol)}
                       aria-label={`تبدیل ${item.title}`}
-                      className="min-h-[40px] min-w-[40px] p-2 rounded-xl bg-obsidian-card border border-white/[0.06] text-on-surface-variant hover:text-on-surface flex items-center justify-center"
+                      className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-obsidian-card border border-white/[0.06] text-on-surface-variant hover:text-on-surface flex items-center justify-center"
                       title="تبدیل ارز"
                     >
                       <ArrowLeftRight className="w-4 h-4" />
@@ -279,7 +283,7 @@ export function ForexView({
                       type="button"
                       onClick={() => onOpenAlertModal(item.symbol)}
                       aria-label={`هشدار قیمت ${item.title}`}
-                      className="min-h-[40px] min-w-[40px] p-2 rounded-xl bg-obsidian-card border border-white/[0.06] text-on-surface-variant hover:text-bullion flex items-center justify-center"
+                      className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-obsidian-card border border-white/[0.06] text-on-surface-variant hover:text-bullion flex items-center justify-center"
                       title="هشدار قیمت"
                     >
                       <Bell className="w-4 h-4" />
@@ -291,7 +295,7 @@ export function ForexView({
           })}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 sm:gap-4 w-full min-w-0">
           {filtered.map((item) => {
             const percent = formatPercent(item.changePercent);
             const isOunce = item.id === "ons";
@@ -311,14 +315,14 @@ export function ForexView({
             return (
               <article
                 key={item.id}
-                className={`glass-panel glass-panel-hover rounded-2xl p-5 min-w-0 transition-all ${
+                className={`glass-panel glass-panel-hover rounded-2xl p-4 sm:p-5 min-w-0 transition-all ${
                   selected === item.symbol
                     ? "border-bullion/45 ring-1 ring-bullion/25"
                     : ""
                 }`}
               >
-                <div className="flex justify-between items-start gap-2">
-                  <div className="flex items-start gap-2.5 min-w-0">
+                <div className="flex justify-between items-start gap-2 min-w-0">
+                  <div className="flex items-start gap-2 min-w-0">
                     <button
                       type="button"
                       aria-label={`افزودن ${item.title} به منتخب‌ها`}
@@ -335,7 +339,7 @@ export function ForexView({
                       <h2 className="font-bold text-sm sm:text-base truncate">
                         {item.title}
                       </h2>
-                      <p className="text-xs text-on-surface-variant mt-0.5 font-num">
+                      <p className="text-[11px] sm:text-xs text-on-surface-variant mt-0.5 font-num truncate">
                         {item.id.toUpperCase()} · {item.titleEn}
                         {item.dataQuality === "estimated" ? " · تخمینی" : ""}
                       </p>
@@ -356,7 +360,7 @@ export function ForexView({
                 </div>
 
                 <p
-                  className="font-num text-3xl sm:text-4xl font-black mt-5 mb-2 tracking-normal text-bullion-light"
+                  className="font-num text-2xl sm:text-4xl font-black mt-4 mb-2 tracking-normal text-bullion-light truncate"
                   dir="ltr"
                 >
                   {formatPrice(item.priceToman, unit, false, isOunce)}{" "}
@@ -366,13 +370,13 @@ export function ForexView({
                 </p>
 
                 {/* Intraday Low-to-High Range Bar */}
-                <div className="mt-4 pt-3.5 border-t border-white/10">
-                  <div className="flex justify-between items-center text-[11px] text-on-surface-variant font-num mb-1.5">
-                    <span>
+                <div className="mt-3.5 pt-3 border-t border-white/10">
+                  <div className="flex justify-between items-center gap-2 text-[11px] text-on-surface-variant font-num mb-1.5 min-w-0">
+                    <span className="truncate">
                       کمترین:{" "}
                       {formatPrice(item.lowToman, unit, false, isOunce)}
                     </span>
-                    <span>
+                    <span className="truncate">
                       بیشترین:{" "}
                       {formatPrice(item.highToman, unit, false, isOunce)}
                     </span>
@@ -388,33 +392,33 @@ export function ForexView({
                   </div>
                 </div>
 
-                <p className="text-[11px] mt-3 text-on-surface-variant font-num">
+                <p className="text-[11px] mt-2.5 text-on-surface-variant font-num">
                   ساعت منبع: {item.updatedAt}
                 </p>
 
-                <div className="flex justify-between items-center gap-2 mt-4 pt-3 border-t border-white/5">
+                <div className="flex justify-between items-center gap-1.5 mt-3.5 pt-3 border-t border-white/5">
                   <button
                     type="button"
                     onClick={() => onSelectConverter(item.symbol)}
-                    className="min-h-[40px] px-2.5 rounded-xl text-xs font-medium flex gap-1.5 items-center text-bullion hover:bg-bullion/10 transition-colors whitespace-nowrap shrink-0"
+                    className="h-9 px-2.5 rounded-xl text-xs font-medium flex gap-1.5 items-center text-bullion hover:bg-bullion/10 transition-colors whitespace-nowrap"
                   >
-                    <ArrowLeftRight className="w-4 h-4" />
+                    <ArrowLeftRight className="w-3.5 h-3.5 shrink-0" />
                     تبدیل
                   </button>
                   <button
                     type="button"
                     disabled={item.dataQuality !== "live"}
                     onClick={() => handleSelectChart(item.symbol)}
-                    className="min-h-[40px] px-2.5 rounded-xl text-xs font-medium flex items-center gap-1.5 hover:bg-white/5 transition-colors disabled:opacity-30 whitespace-nowrap shrink-0"
+                    className="h-9 px-2.5 rounded-xl text-xs font-medium flex items-center gap-1.5 hover:bg-white/5 transition-colors disabled:opacity-30 whitespace-nowrap"
                   >
-                    <ChartNoAxesCombined className="w-4 h-4 text-bullion" />
+                    <ChartNoAxesCombined className="w-3.5 h-3.5 text-bullion shrink-0" />
                     نمودار واقعی
                   </button>
                   <button
                     type="button"
                     onClick={() => onOpenAlertModal(item.symbol)}
                     aria-label={`هشدار قیمت ${item.title}`}
-                    className="min-h-[40px] min-w-[40px] rounded-xl flex items-center justify-center hover:bg-white/5 transition-colors"
+                    className="h-9 w-9 rounded-xl flex items-center justify-center hover:bg-white/5 transition-colors shrink-0"
                   >
                     <Bell className="w-4 h-4 text-on-surface-variant hover:text-bullion" />
                   </button>
