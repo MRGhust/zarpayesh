@@ -32,7 +32,7 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run check
       - run: npm test
-  market-contract:
+    market-contract:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
@@ -43,7 +43,7 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run test:market
       - run: npm run build
-    cloud:
+      cloud:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: verify
     runs-on: ubuntu-latest
