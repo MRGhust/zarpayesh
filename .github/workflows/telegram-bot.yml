@@ -29,8 +29,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: npm
-          cache-dependency-path: az_be_ma_mabot/package.json
       - run: npm install --ignore-scripts
       - run: npm run check
       - run: npm test
@@ -42,8 +40,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: npm
-      - run: npm ci --ignore-scripts
+      - run: npm install --ignore-scripts
       - run: npm run test:market
       - run: npm run build
     cloud:
@@ -59,8 +56,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: npm
-          cache-dependency-path: az_be_ma_mabot/package.json
      - run: npm install --ignore-scripts
       - name: Check scheduler credential
         env:
