@@ -30,8 +30,8 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: az_be_ma_mabot/package-lock.json
-      - run: npm ci --ignore-scripts
+          cache-dependency-path: az_be_ma_mabot/package.json
+            - run: npm install --ignore-scripts
       - run: npm run check
       - run: npm test
   market-contract:
@@ -60,8 +60,8 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: az_be_ma_mabot/package-lock.json
-      - run: npm ci --ignore-scripts
+          cache-dependency-path: az_be_ma_mabot/package.json
+            - run: npm install --ignore-scripts
       - name: Check scheduler credential
         env:
           TGCLOUD_TOKEN: ${{ secrets.TGCLOUD_TOKEN }}
